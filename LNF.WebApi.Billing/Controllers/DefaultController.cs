@@ -5,6 +5,7 @@ using LNF.Models.Billing.Process;
 using System;
 using System.Collections.Generic;
 using System.Web.Http;
+using System.Diagnostics;
 
 namespace LNF.WebApi.Billing.Controllers
 {
@@ -16,10 +17,100 @@ namespace LNF.WebApi.Billing.Controllers
             return "billing-api";
         }
 
-        [Route("test")]
-        public string GetTest()
+        [HttpPost, Route("update")]
+        public IEnumerable<string> UpdateBilling([FromBody] UpdateBillingArgs args)
         {
-            return "test";
+            // updates all billing
+
+            DateTime startTime = DateTime.Now;
+
+            var result = new List<string>();
+            result.Add(string.Format("Started at {0:yyyy-MM-dd HH:mm:ss}", startTime));
+
+            Stopwatch sw;
+
+            DateTime sd = args.StartDate;
+
+            while (sd < args.EndDate)
+            {
+                DateTime ed = sd.AddMonths(1);
+
+                var isTemp = (sd == DateTime.Now.FirstOfMonth());
+
+                var populateSubsidy = false;
+
+                sw = new Stopwatch();
+
+                if (args.BillingCategory.HasFlag(BillingCategory.Tool))
+                {
+                    var tool = WriteToolDataManager.Create(sd, ed, args.ClientID, args.ResourceID);
+
+                    sw.Restart();    
+                    tool.WriteToolDataClean();
+                    result.Add(string.Format("Completed ToolDataClean in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    tool.WriteToolData();
+                    result.Add(string.Format("Completed ToolData in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    BillingDataProcessStep1.PopulateToolBilling(sd, args.ClientID, isTemp);
+                    result.Add(string.Format("Completed ToolBilling in {0}", sw.Elapsed));
+
+                    populateSubsidy = true;
+                }
+
+                if (args.BillingCategory.HasFlag(BillingCategory.Room))
+                {
+                    var room = WriteRoomDataManager.Create(sd, ed, args.ClientID, args.RoomID);
+
+                    sw.Restart();
+                    room.WriteRoomDataClean();
+                    result.Add(string.Format("Completed RoomDataClean in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    room.WriteRoomData();
+                    result.Add(string.Format("Completed RoomData in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    BillingDataProcessStep1.PopulateRoomBilling(sd, args.ClientID, isTemp);
+                    result.Add(string.Format("Completed RoomBilling in {0}", sw.Elapsed));
+
+                    populateSubsidy = true;
+                }
+
+                if (args.BillingCategory.HasFlag(BillingCategory.Store))
+                {
+                    var store = WriteStoreDataManager.Create(sd, ed, args.ClientID, args.RoomID);
+
+                    sw.Restart();
+                    store.WriteStoreDataClean();
+                    result.Add(string.Format("Completed StoreDataClean in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    store.WriteStoreData();
+                    result.Add(string.Format("Completed StoreData in {0}", sw.Elapsed));
+
+                    sw.Restart();
+                    BillingDataProcessStep1.PopulateStoreBilling(sd, isTemp);
+                    result.Add(string.Format("Completed StoreBilling in {0}", sw.Elapsed));
+                }
+
+                if (!isTemp && populateSubsidy)
+                {
+                    sw.Restart();
+                    BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(sd, args.ClientID);
+                    result.Add(string.Format("Completed SubsidyBilling in {0}", sw.Elapsed));
+                }
+
+                sd = sd.AddMonths(1);
+
+                sw.Stop();
+            }
+
+            result.Add(string.Format("Completed at {0:yyyy-MM-dd HH:mm:ss}, time taken: {1}", DateTime.Now, DateTime.Now - startTime));
+
+            return result;
         }
 
         [HttpPost, Route("update-client")]
@@ -67,7 +158,7 @@ namespace LNF.WebApi.Billing.Controllers
             }
             catch (Exception ex)
             {
-                result.ErrorMessage = ex.ToString();   
+                result.ErrorMessage = ex.ToString();
                 result.Success = false;
             }
 
