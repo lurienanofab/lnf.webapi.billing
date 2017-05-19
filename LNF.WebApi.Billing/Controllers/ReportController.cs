@@ -54,8 +54,8 @@ namespace LNF.WebApi.Billing.Controllers
             ChargeType[] chargeTypes = DA.Current.Query<ChargeType>().ToArray();
 
             //get all usage during the date range
-            var toolUsage = DA.Current.Query<Repository.Billing.ToolBilling>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
-            var roomUsage = DA.Current.Query<Repository.Billing.RoomBilling>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
+            var toolUsage = DA.Current.Query<ToolBilling>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
+            var roomUsage = DA.Current.Query<RoomBilling>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
             var storeUsage = DA.Current.Query<StoreBilling>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
             var miscUsage = DA.Current.Query<MiscBillingCharge>().Where(x => x.Period >= sd && x.Period < ed).ToArray();
 

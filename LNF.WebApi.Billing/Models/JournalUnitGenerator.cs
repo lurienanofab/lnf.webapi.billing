@@ -29,40 +29,40 @@ namespace LNF.WebApi.Billing.Models
         {
             DataTable dtReport = InitTable();
 
-            double ChargeAmount = 0;
-            string JournalLineRef = string.Empty;
-            double SubsidyDiscount = 0;
-            double Total = 0;
+            double chargeAmount = 0;
+            string journalLineRef = string.Empty;
+            double subsidyDiscount = 0;
+            double total = 0;
 
             //for loop each record in clientID and AccountID aggregate
             foreach (DataRow cadr in ClientAccountData.Rows)
             {
                 if (cadr.RowState != DataRowState.Deleted)
                 {
-                    ChargeAmount = Math.Round(Convert.ToDouble(dtBilling.Compute("SUM(LineCost)", DataRowFilter(cadr))), 2);
-                    if (Math.Abs(ChargeAmount) > 0.01)
+                    chargeAmount = Math.Round(Convert.ToDouble(dtBilling.Compute("SUM(LineCost)", DataRowFilter(cadr))), 2);
+                    if (Math.Abs(chargeAmount) > 0.01)
                     {
-                        SubsidyDiscount = RepositoryUtility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
-                        if (ChargeAmount != 0 && SubsidyDiscount != 0)
+                        subsidyDiscount = RepositoryUtility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
+                        if (chargeAmount != 0 && subsidyDiscount != 0)
                         {
                             DataRow[] billingrows = dtBilling.Select(DataRowFilter(cadr));
                             DataRow drBilling = billingrows[0];
-                            string DebitAccount = RepositoryUtility.ConvertTo(drBilling["Number"], string.Empty);
-                            AccountInfo dai = new AccountInfo(DebitAccount);
+                            string debitAccount = RepositoryUtility.ConvertTo(drBilling["Number"], string.Empty);
+                            AccountInfo dai = new AccountInfo(debitAccount);
 
                             //get manager's name
-                            JournalLineRef = ReportUtility.ClipText(ManagerName(drBilling), 10);
+                            journalLineRef = ReportUtility.ClipText(ManagerName(drBilling), 10);
 
                             switch (Report.JournalUnitType)
                             {
                                 case JournalUnitTypes.A:
-                                    ProcessJUA(dtReport, drBilling, dai, JournalLineRef, SubsidyDiscount, ref Total);
+                                    ProcessJUA(dtReport, drBilling, dai, journalLineRef, subsidyDiscount, ref total);
                                     break;
                                 case JournalUnitTypes.B:
-                                    ProcessJUB(dtReport, drBilling, dai, JournalLineRef, SubsidyDiscount, ref Total);
+                                    ProcessJUB(dtReport, drBilling, dai, journalLineRef, subsidyDiscount, ref total);
                                     break;
                                 case JournalUnitTypes.C:
-                                    ProcessJUC(dtReport, drBilling, dai, JournalLineRef, SubsidyDiscount, ref Total);
+                                    ProcessJUC(dtReport, drBilling, dai, journalLineRef, subsidyDiscount, ref total);
                                     break;
                                 default:
                                     throw new ArgumentException("Invalid JournalUnitType. Allowed values: A, B, C");
@@ -83,9 +83,9 @@ namespace LNF.WebApi.Billing.Models
             Report.CreditEntry.ProgramCode = cai.ProgramCode;
             Report.CreditEntry.ClassName = cai.Class;
             Report.CreditEntry.ProjectGrant = cai.ProjectGrant;
-            Report.CreditEntry.DepartmentalReferenceNumber = JournalLineRef;
+            Report.CreditEntry.DepartmentalReferenceNumber = journalLineRef;
             Report.CreditEntry.ItemDescription = "doscar";
-            Report.CreditEntry.MerchandiseAmount = Math.Round(-Total, 2);
+            Report.CreditEntry.MerchandiseAmount = Math.Round(-total, 2);
             Report.CreditEntry.DepartmentalReferenceNumber = string.Empty;
             Report.CreditEntry.CreditAccount = CreditAccount;
 
@@ -102,7 +102,7 @@ namespace LNF.WebApi.Billing.Models
             totalrow["ProjectGrant"] = cai.ProjectGrant;
             totalrow["DepartmentalReferenceNumber"] = string.Empty;
             totalrow["ItemDescription"] = "zzdoscar";
-            totalrow["MerchandiseAmount"] = Math.Round(-Total, 2).ToString("0.00");
+            totalrow["MerchandiseAmount"] = Math.Round(-total, 2).ToString("0.00");
             dtReport.Rows.Add(totalrow);
         }
 
