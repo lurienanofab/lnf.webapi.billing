@@ -64,7 +64,7 @@ namespace LNF.WebApi.Billing.Models
                 InviteeFName = string.Empty,
                 InviteeLName = string.Empty,
                 ResourceID = rb.RoomID,
-                ResourceName = room.GetDisplayNameOrDefault(),
+                ResourceName = room.RoomDisplayName,
                 AccountID = rb.AccountID,
                 AccountName = acct.AccountName
             };

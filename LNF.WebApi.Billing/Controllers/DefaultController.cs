@@ -2,10 +2,11 @@
 using LNF.CommonTools;
 using LNF.Models.Billing;
 using LNF.Models.Billing.Process;
+using LNF.Repository;
 using System;
 using System.Collections.Generic;
-using System.Web.Http;
 using System.Diagnostics;
+using System.Web.Http;
 
 namespace LNF.WebApi.Billing.Controllers
 {
@@ -127,7 +128,7 @@ namespace LNF.WebApi.Billing.Controllers
                 EndDate = ed,
                 ClientID = model.ClientID,
                 Command = "UpdateClientBilling",
-                Description = "Load all billing tables for a client and date range.",
+                Description = "Load all billing tables for a client and period.",
                 ErrorMessage = string.Empty
             };
 
