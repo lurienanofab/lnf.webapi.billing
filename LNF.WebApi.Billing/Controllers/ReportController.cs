@@ -8,6 +8,7 @@ using LNF.Repository.Data;
 using LNF.WebApi.Billing.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Web.Http;
 
@@ -26,7 +27,8 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("report/user-apportionment")]
         public int SendUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
         {
-            int result = ApportionmentUtility.SendMonthlyApportionmentEmails(options.Period, options.Message, options.GetRecipients(), options.NoEmail);
+            string[] recipients = GetRecipients("UserApportionmentEmailRecipients");
+            int result = ApportionmentUtility.SendMonthlyApportionmentEmails(options.Period, options.Message, recipients, options.NoEmail);
             return result;
         }
 
@@ -38,11 +40,12 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("report/financial-manager")]
         public int SendFinancialManagerReport([FromBody] FinancialManagerReportOptions options)
         {
+            string[] recipients = GetRecipients("MonthlyFinancialEmailRecipients");
             int result = FinancialManagerUtility.SendMonthlyUserUsageEmails(options.Period, new MonthlyEmailOptions()
             {
                 IncludeManager = options.IncludeManager,
                 Message = options.Message,
-                Recipients = options.GetRecipients()
+                Recipients = recipients
             });
 
             return result;
@@ -132,16 +135,24 @@ namespace LNF.WebApi.Billing.Controllers
         }
 
         [Route("report/regular-exception")]
-        public IEnumerable<Repository.Billing.RegularException> GetRegularExceptions(DateTime period, int clientId = 0)
+        public IEnumerable<RegularException> GetRegularExceptions(DateTime period, int clientId = 0)
         {
-            IQueryable<Repository.Billing.RegularException> result;
+            IQueryable<RegularException> result;
 
             if (clientId > 0)
-                result = DA.Current.Query<Repository.Billing.RegularException>().Where(x => x.Period == period && x.ClientID == clientId);
+                result = DA.Current.Query<RegularException>().Where(x => x.Period == period && x.ClientID == clientId);
             else
-                result = DA.Current.Query<Repository.Billing.RegularException>().Where(x => x.Period == period);
+                result = DA.Current.Query<RegularException>().Where(x => x.Period == period);
 
             return result.ToList();
+        }
+
+        private string[] GetRecipients(string key)
+        {
+            if (string.IsNullOrEmpty(ConfigurationManager.AppSettings[key]))
+                return null;
+            else
+                return ConfigurationManager.AppSettings[key].Split(',');
         }
     }
 }

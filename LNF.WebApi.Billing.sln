@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.WebApi.Billing", "LNF.WebApi.Billing\LNF.WebApi.Billing.csproj", "{DCF75766-2E02-48CD-89A4-3C0A65C2EB2E}"
 EndProject
@@ -10,8 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.Impl", "..\LNF\LNF.Impl\LNF.Impl.csproj", "{7A6CD165-0C48-4680-9A49-281688EB1CD8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.WebApi", "..\lnf\LNF.WebApi\LNF.WebApi.csproj", "{85BE7662-47C8-4E82-8090-3F2BD61CC0F7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineServices.Api", "..\lnf\OnlineServices.Api\OnlineServices.Api.csproj", "{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.Models", "..\lnf\LNF.Models\LNF.Models.csproj", "{98C7F73D-EF9D-4A87-8B79-A1208085CFBD}"
 EndProject
@@ -37,10 +35,6 @@ Global
 		{85BE7662-47C8-4E82-8090-3F2BD61CC0F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{85BE7662-47C8-4E82-8090-3F2BD61CC0F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{85BE7662-47C8-4E82-8090-3F2BD61CC0F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{98C7F73D-EF9D-4A87-8B79-A1208085CFBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{98C7F73D-EF9D-4A87-8B79-A1208085CFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98C7F73D-EF9D-4A87-8B79-A1208085CFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -48,5 +42,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {29949CC7-E980-45C7-AB29-87B38B9CD34B}
 	EndGlobalSection
 EndGlobal
