@@ -410,9 +410,10 @@ namespace LNF.WebApi.Billing.Controllers
                     throw new NotImplementedException();
             }
 
-            int result = DA.Current.SqlResult<int>(
+            int result = DA.Current.SqlQuery(
                 string.Format("DELETE FROM {0}Data WHERE Period = :period AND ClientID = ISNULL(:clientId, ClientID) AND {1} = ISNULL(:record, {1});SELECT @@ROWCOUNT;", billingCategory, recordParam),
-                new object[] { period, clientId, record });
+                new { period, clientId, record }
+            ).Result<int>();
 
             return result;
         }
