@@ -1,4 +1,5 @@
-﻿using LNF.Models.Billing;
+﻿using LNF.CommonTools;
+using LNF.Models.Billing;
 using LNF.Models.Billing.Reports.ServiceUnitBilling;
 using LNF.Repository;
 using System;
@@ -42,12 +43,12 @@ namespace LNF.WebApi.Billing.Models
                     chargeAmount = Math.Round(Convert.ToDouble(dtBilling.Compute("SUM(LineCost)", DataRowFilter(cadr))), 2);
                     if (Math.Abs(chargeAmount) > 0.01)
                     {
-                        subsidyDiscount = RepositoryUtility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
+                        subsidyDiscount = Utility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
                         if (chargeAmount != 0 && subsidyDiscount != 0)
                         {
                             DataRow[] billingrows = dtBilling.Select(DataRowFilter(cadr));
                             DataRow drBilling = billingrows[0];
-                            string debitAccount = RepositoryUtility.ConvertTo(drBilling["Number"], string.Empty);
+                            string debitAccount = Utility.ConvertTo(drBilling["Number"], string.Empty);
                             AccountInfo dai = new AccountInfo(debitAccount);
 
                             //get manager's name
@@ -76,16 +77,20 @@ namespace LNF.WebApi.Billing.Models
 
             //Summary row
             AccountInfo cai = new AccountInfo(CreditAccount);
-            Report.CreditEntry = new CreditEntry();
-            Report.CreditEntry.Account = cai.Account;
-            Report.CreditEntry.FundCode = cai.FundCode;
-            Report.CreditEntry.DeptID = cai.DeptID;
-            Report.CreditEntry.ProgramCode = cai.ProgramCode;
-            Report.CreditEntry.ClassName = cai.Class;
-            Report.CreditEntry.ProjectGrant = cai.ProjectGrant;
-            Report.CreditEntry.DepartmentalReferenceNumber = journalLineRef;
-            Report.CreditEntry.ItemDescription = "doscar";
-            Report.CreditEntry.MerchandiseAmount = Math.Round(-total, 2);
+
+            Report.CreditEntry = new CreditEntry
+            {
+                Account = cai.Account,
+                FundCode = cai.FundCode,
+                DeptID = cai.DeptID,
+                ProgramCode = cai.ProgramCode,
+                ClassName = cai.Class,
+                ProjectGrant = cai.ProjectGrant,
+                DepartmentalReferenceNumber = journalLineRef,
+                ItemDescription = "doscar",
+                MerchandiseAmount = Math.Round(-total, 2)
+            };
+
             Report.CreditEntry.DepartmentalReferenceNumber = string.Empty;
             Report.CreditEntry.CreditAccount = CreditAccount;
 
@@ -130,8 +135,6 @@ namespace LNF.WebApi.Billing.Models
 
         private void ProcessJUA(DataTable dtReport, DataRow drBilling, AccountInfo debit_acct, string JournalLineRef, double SubsidyDiscount, ref double Total)
         {
-            string ctabbr = ChargeTypeAbbreviation(Report.BillingCategory);
-
             if (debit_acct.FundCode == "20000" || debit_acct.FundCode == "25000")
             {
                 DataRow newdr = dtReport.NewRow();
@@ -146,11 +149,11 @@ namespace LNF.WebApi.Billing.Models
                 newdr["Class"] = debit_acct.Class;
                 newdr["ProjectGrant"] = debit_acct.ProjectGrant;
                 newdr["DepartmentalReferenceNumber"] = JournalLineRef;
-                newdr["ItemDescription"] = ReportUtility.ClipText(string.Format("LNF{0}A {1} {2}", ctabbr, drBilling["DisplayName"], drBilling["BillingTypeName"]), 30);
+                newdr["ItemDescription"] = GetItemDescription(drBilling, $"LNF{ChargeTypeAbbreviation()}A");
                 newdr["MerchandiseAmount"] = (Math.Round(SubsidyDiscount, 2) * -1).ToString("0.00");
 
                 //Used to calculate the total credit amount
-                Total += RepositoryUtility.ConvertTo(newdr["MerchandiseAmount"], 0D);
+                Total += Utility.ConvertTo(newdr["MerchandiseAmount"], 0D);
 
                 dtReport.Rows.Add(newdr);
 
@@ -159,7 +162,7 @@ namespace LNF.WebApi.Billing.Models
                 newdr["ReportType"] = ReportUtility.EnumToString(Report.ReportType);
                 newdr["ChargeType"] = ReportUtility.EnumToString(Report.BillingCategory);
                 newdr["JournalUnitType"] = Report.JournalUnitType;
-                newdr["Period"] = RepositoryUtility.ConvertTo(drBilling["Period"], DateTime.MinValue);
+                newdr["Period"] = Utility.ConvertTo(drBilling["Period"], DateTime.MinValue);
                 newdr["Account"] = debit_acct.Account;
                 newdr["FundCode"] = "10000";
                 newdr["DeptID"] = debit_acct.DeptID;
@@ -167,7 +170,7 @@ namespace LNF.WebApi.Billing.Models
                 newdr["Class"] = debit_acct.Class;
                 newdr["ProjectGrant"] = debit_acct.ProjectGrant;
                 newdr["DepartmentalReferenceNumber"] = JournalLineRef;
-                newdr["ItemDescription"] = ReportUtility.ClipText(string.Format("LNF{0}A {1} {2}", ctabbr, drBilling["DisplayName"], drBilling["BillingTypeName"]), 30);
+                newdr["ItemDescription"] = GetItemDescription(drBilling, $"LNF{ChargeTypeAbbreviation()}A");
                 newdr["MerchandiseAmount"] = Math.Round(SubsidyDiscount, 2).ToString("0.00");
 
                 dtReport.Rows.Add(newdr);
@@ -177,7 +180,7 @@ namespace LNF.WebApi.Billing.Models
                 newdr["ReportType"] = ReportUtility.EnumToString(Report.ReportType);
                 newdr["ChargeType"] = ReportUtility.EnumToString(Report.BillingCategory);
                 newdr["JournalUnitType"] = Report.JournalUnitType;
-                newdr["Period"] = RepositoryUtility.ConvertTo(drBilling["Period"], DateTime.MinValue);
+                newdr["Period"] = Utility.ConvertTo(drBilling["Period"], DateTime.MinValue);
                 newdr["Account"] = "450600";
                 newdr["FundCode"] = "10000";
                 newdr["DeptID"] = debit_acct.DeptID;
@@ -185,7 +188,7 @@ namespace LNF.WebApi.Billing.Models
                 newdr["Class"] = debit_acct.Class;
                 newdr["ProjectGrant"] = debit_acct.ProjectGrant;
                 newdr["DepartmentalReferenceNumber"] = JournalLineRef;
-                newdr["ItemDescription"] = ReportUtility.ClipText(string.Format("LNF{0}A {1} {2}", ctabbr, drBilling["DisplayName"], drBilling["BillingTypeName"]), 30);
+                newdr["ItemDescription"] = GetItemDescription(drBilling, $"LNF{ChargeTypeAbbreviation()}A");
                 newdr["MerchandiseAmount"] = (Math.Round(SubsidyDiscount, 2) * -1).ToString("0.00");
 
                 dtReport.Rows.Add(newdr);
@@ -194,8 +197,6 @@ namespace LNF.WebApi.Billing.Models
 
         private void ProcessJUB(DataTable dtReport, DataRow drBilling, AccountInfo debit_acct, string JournalLineRef, double SubsidyDiscount, ref double Total)
         {
-            string ctabbr = ChargeTypeAbbreviation(Report.BillingCategory);
-
             if (debit_acct.FundCode == "10000" && debit_acct.ProgramCode == "CSTSH")
             {
                 DataRow newdr = dtReport.NewRow();
@@ -210,39 +211,37 @@ namespace LNF.WebApi.Billing.Models
                 newdr["Class"] = debit_acct.Class;
                 newdr["ProjectGrant"] = debit_acct.ProjectGrant;
                 newdr["DepartmentalReferenceNumber"] = JournalLineRef;
-                newdr["ItemDescription"] = ReportUtility.ClipText(string.Format("LNF{0}B {1} {2}", ctabbr, drBilling["DisplayName"], drBilling["BillingTypeName"]), 30);
+                newdr["ItemDescription"] = GetItemDescription(drBilling, $"LNF{ChargeTypeAbbreviation()}B");
                 newdr["MerchandiseAmount"] = (Math.Round(SubsidyDiscount, 2) * -1).ToString("0.00");
 
                 //Used to calculate the total credit amount
-                Total += RepositoryUtility.ConvertTo(newdr["MerchandiseAmount"], 0D);
+                Total += Utility.ConvertTo(newdr["MerchandiseAmount"], 0D);
 
                 dtReport.Rows.Add(newdr);
             }
         }
 
-        private void ProcessJUC(DataTable dtReport, DataRow drBilling, AccountInfo debit_acct, string JournalLineRef, double SubsidyDiscount, ref double Total)
+        private void ProcessJUC(DataTable dtReport, DataRow drBilling, AccountInfo debitAcct, string journalLineRef, double subsidyDiscount, ref double total)
         {
-            string ctabbr = ChargeTypeAbbreviation(Report.BillingCategory);
-
-            if (debit_acct.FundCode != "20000" && debit_acct.FundCode != "25000" && !(debit_acct.FundCode == "10000" && debit_acct.ProgramCode == "CSTSH"))
+            if (debitAcct.FundCode != "20000" && debitAcct.FundCode != "25000" && !(debitAcct.FundCode == "10000" && debitAcct.ProgramCode == "CSTSH"))
             {
                 DataRow newdr = dtReport.NewRow();
                 newdr["ReportType"] = ReportUtility.EnumToString(Report.ReportType);
                 newdr["ChargeType"] = ReportUtility.EnumToString(Report.BillingCategory);
                 newdr["JournalUnitType"] = Report.JournalUnitType;
                 newdr["Period"] = drBilling["Period"];
-                newdr["Account"] = debit_acct.Account;
-                newdr["FundCode"] = debit_acct.FundCode;
-                newdr["DeptID"] = debit_acct.DeptID;
-                newdr["ProgramCode"] = debit_acct.ProgramCode;
-                newdr["Class"] = debit_acct.Class;
-                newdr["ProjectGrant"] = debit_acct.ProjectGrant;
-                newdr["DepartmentalReferenceNumber"] = JournalLineRef;
-                newdr["ItemDescription"] = ReportUtility.ClipText(string.Format("LNF{0}C {1} {2}", ctabbr, drBilling["DisplayName"], drBilling["BillingTypeName"]), 30);
-                newdr["MerchandiseAmount"] = (Math.Round(SubsidyDiscount, 2) * -1).ToString("0.00");
+                newdr["Account"] = debitAcct.Account;
+                newdr["FundCode"] = debitAcct.FundCode;
+                newdr["DeptID"] = debitAcct.DeptID;
+                newdr["ProgramCode"] = debitAcct.ProgramCode;
+                newdr["Class"] = debitAcct.Class;
+                newdr["ProjectGrant"] = debitAcct.ProjectGrant;
+                newdr["DepartmentalReferenceNumber"] = journalLineRef;
+                newdr["ItemDescription"] = GetItemDescription(drBilling, $"LNF{ChargeTypeAbbreviation()}C");
+                newdr["MerchandiseAmount"] = (Math.Round(subsidyDiscount, 2) * -1).ToString("0.00");
 
                 //Used to calculate the total credit amount
-                Total += RepositoryUtility.ConvertTo(newdr["MerchandiseAmount"], 0D);
+                total += Utility.ConvertTo(newdr["MerchandiseAmount"], 0D);
 
                 dtReport.Rows.Add(newdr);
             }
@@ -250,36 +249,36 @@ namespace LNF.WebApi.Billing.Models
 
         private static readonly Dictionary<BillingCategory, string> ChargeTypeAbbreviationLookup = new Dictionary<BillingCategory, string>()
         {
-            { BillingCategory.Room | BillingCategory.Tool | BillingCategory.Store, "all" },
+            { BillingCategory.Room | BillingCategory.Tool | BillingCategory.Store, "al" },
             { BillingCategory.Room, "rm" },
             { BillingCategory.Tool, "tl" },
             { BillingCategory.Store, "st" }
         };
 
-        private string ChargeTypeAbbreviation(BillingCategory billingCategory)
+        private string ChargeTypeAbbreviation()
         {
-            return ChargeTypeAbbreviationLookup[billingCategory];
+            return ChargeTypeAbbreviationLookup[Report.BillingCategory];
         }
 
         private JournalUnitReportItem CreateJournalUnitReportItem(DataRowView drv)
         {
             return new JournalUnitReportItem()
             {
-                ReportType = RepositoryUtility.ConvertTo(drv["ReportType"], string.Empty),
-                ChargeType = RepositoryUtility.ConvertTo(drv["ChargeType"], string.Empty),
-                JournalUnitType = RepositoryUtility.ConvertTo(drv["JournalUnitType"], string.Empty),
-                Period = RepositoryUtility.ConvertTo(drv["Period"], DateTime.MinValue),
-                Account = RepositoryUtility.ConvertTo(drv["Account"], string.Empty),
-                FundCode = RepositoryUtility.ConvertTo(drv["FundCode"], string.Empty),
-                DeptID = RepositoryUtility.ConvertTo(drv["DeptID"], string.Empty),
-                ProgramCode = RepositoryUtility.ConvertTo(drv["ProgramCode"], string.Empty),
-                Class = RepositoryUtility.ConvertTo(drv["Class"], string.Empty),
-                ProjectGrant = RepositoryUtility.ConvertTo(drv["ProjectGrant"], string.Empty),
-                DepartmentalReferenceNumber = RepositoryUtility.ConvertTo(drv["DepartmentalReferenceNumber"], string.Empty),
-                ItemDescription = RepositoryUtility.ConvertTo(drv["ItemDescription"], string.Empty),
-                MerchandiseAmount = RepositoryUtility.ConvertTo(drv["MerchandiseAmount"], string.Empty),
-                CreditAccount = RepositoryUtility.ConvertTo(drv["CreditAccount"], string.Empty),
-                AccountID = RepositoryUtility.ConvertTo(drv["AccountID"], string.Empty)
+                ReportType = Utility.ConvertTo(drv["ReportType"], string.Empty),
+                ChargeType = Utility.ConvertTo(drv["ChargeType"], string.Empty),
+                JournalUnitType = Utility.ConvertTo(drv["JournalUnitType"], string.Empty),
+                Period = Utility.ConvertTo(drv["Period"], DateTime.MinValue),
+                Account = Utility.ConvertTo(drv["Account"], string.Empty),
+                FundCode = Utility.ConvertTo(drv["FundCode"], string.Empty),
+                DeptID = Utility.ConvertTo(drv["DeptID"], string.Empty),
+                ProgramCode = Utility.ConvertTo(drv["ProgramCode"], string.Empty),
+                Class = Utility.ConvertTo(drv["Class"], string.Empty),
+                ProjectGrant = Utility.ConvertTo(drv["ProjectGrant"], string.Empty),
+                DepartmentalReferenceNumber = Utility.ConvertTo(drv["DepartmentalReferenceNumber"], string.Empty),
+                ItemDescription = Utility.ConvertTo(drv["ItemDescription"], string.Empty),
+                MerchandiseAmount = Utility.ConvertTo(drv["MerchandiseAmount"], string.Empty),
+                CreditAccount = Utility.ConvertTo(drv["CreditAccount"], string.Empty),
+                AccountID = Utility.ConvertTo(drv["AccountID"], string.Empty)
             };
         }
     }

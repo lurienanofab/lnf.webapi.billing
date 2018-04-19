@@ -12,7 +12,7 @@ namespace LNF.WebApi.Billing.Models
         public RegularException CreateRegularException(IToolBilling tb, ReservationInvitee invitee)
         {
             var client = CacheManager.Current.GetClient(tb.ClientID);
-            var res = CacheManager.Current.GetResource(tb.ResourceID);
+            var res = CacheManager.Current.ResourceTree().GetResource(tb.ResourceID);
             var acct = CacheManager.Current.GetAccount(tb.AccountID);
 
             int inviteeClientId = 0;

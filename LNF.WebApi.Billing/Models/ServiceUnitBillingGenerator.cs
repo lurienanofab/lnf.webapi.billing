@@ -1,4 +1,5 @@
-﻿using LNF.Models.Billing;
+﻿using LNF.CommonTools;
+using LNF.Models.Billing;
 using LNF.Models.Billing.Reports.ServiceUnitBilling;
 using LNF.Repository;
 using System;
@@ -43,9 +44,9 @@ namespace LNF.WebApi.Billing.Models
             {
                 if (cadr.RowState != DataRowState.Deleted)
                 {
-                    chargeAmount = Math.Round(RepositoryUtility.ConvertTo(dtBilling.Compute("SUM(LineCost)", DataRowFilter(cadr)), 0D), 2);
+                    chargeAmount = Math.Round(Utility.ConvertTo(dtBilling.Compute("SUM(LineCost)", DataRowFilter(cadr)), 0D), 2);
                     if (dtBilling.Columns.Contains("SubsidyDiscount"))
-                        subsidyDiscount = RepositoryUtility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
+                        subsidyDiscount = Utility.ConvertTo(dtBilling.Compute("SUM(SubsidyDiscount)", DataRowFilter(cadr)), 0D);
 
                     if (chargeAmount != 0)
                     {
@@ -56,14 +57,14 @@ namespace LNF.WebApi.Billing.Models
                             if (billingrows.Length > 0)
                             {
                                 DataRow dr = billingrows[0];
-                                string DebitAccount = RepositoryUtility.ConvertTo(dr["Number"], string.Empty);
-                                AccountInfo debit_acct = new AccountInfo(DebitAccount);
+                                string debitAcctNumber = Utility.ConvertTo(dr["Number"], string.Empty);
+                                AccountInfo debitAcct = new AccountInfo(debitAcctNumber);
 
                                 //get manager's name
                                 deptRefNum = ManagerName(cadr);
 
-                                DateTime p = RepositoryUtility.ConvertTo(dr["Period"], DateTime.MinValue);
-                                DateTime invoice_date = (p.Equals(DateTime.MinValue)) ? Report.EndPeriod.AddMonths(-1) : p;
+                                DateTime p = Utility.ConvertTo(dr["Period"], DateTime.MinValue);
+                                DateTime invoiceDate = (p.Equals(DateTime.MinValue)) ? Report.EndPeriod.AddMonths(-1) : p;
 
                                 DataRow newdr = dtReport.NewRow();
                                 newdr["ReportType"] = ReportUtility.EnumToString(Report.ReportType);
@@ -71,14 +72,14 @@ namespace LNF.WebApi.Billing.Models
                                 newdr["Period"] = dr["Period"];
                                 newdr["CardType"] = 1;
                                 newdr["ShortCode"] = dr["ShortCode"];
-                                newdr["Account"] = debit_acct.Account;
-                                newdr["FundCode"] = debit_acct.FundCode;
-                                newdr["DeptID"] = debit_acct.DeptID;
-                                newdr["ProgramCode"] = debit_acct.ProgramCode;
-                                newdr["Class"] = debit_acct.Class;
-                                newdr["ProjectGrant"] = debit_acct.ProjectGrant;
+                                newdr["Account"] = debitAcct.Account;
+                                newdr["FundCode"] = debitAcct.FundCode;
+                                newdr["DeptID"] = debitAcct.DeptID;
+                                newdr["ProgramCode"] = debitAcct.ProgramCode;
+                                newdr["Class"] = debitAcct.Class;
+                                newdr["ProjectGrant"] = debitAcct.ProjectGrant;
                                 newdr["VendorID"] = "0000456136"; //wtf?
-                                newdr["InvoiceDate"] = invoice_date.ToString("yyyy/MM/dd");
+                                newdr["InvoiceDate"] = invoiceDate.ToString("yyyy/MM/dd");
                                 newdr["InvoiceID"] = GetInvoiceID();
                                 newdr["Uniqname"] = dr["UserName"];
                                 newdr["DepartmentalReferenceNumber"] = deptRefNum;
@@ -131,9 +132,9 @@ namespace LNF.WebApi.Billing.Models
 
             foreach (DataRow dr in dtReport.Rows)
             {
-                SumUsageCharge += RepositoryUtility.ConvertTo(dr["UsageCharge"], 0D);
-                SumSubsidyDiscount += RepositoryUtility.ConvertTo(dr["SubsidyDiscount"], 0D);
-                SumBilledCharge += RepositoryUtility.ConvertTo(dr["BilledCharge"], 0D);
+                SumUsageCharge += Utility.ConvertTo(dr["UsageCharge"], 0D);
+                SumSubsidyDiscount += Utility.ConvertTo(dr["SubsidyDiscount"], 0D);
+                SumBilledCharge += Utility.ConvertTo(dr["BilledCharge"], 0D);
                 if (Report.BillingCategory == BillingCategory.Store)
                 {
                     dr["UsageCharge"] = string.Empty;
@@ -247,27 +248,6 @@ namespace LNF.WebApi.Billing.Models
             );
         }
 
-        private string GetItemDescription(DataRow dr)
-        {
-            string result = string.Empty;
-            string displayName = RepositoryUtility.ConvertTo(dr["DisplayName"], string.Empty);
-
-            switch (Report.BillingCategory)
-            {
-                case BillingCategory.Room:
-                case BillingCategory.Tool:
-                    string billingTypeName = RepositoryUtility.ConvertTo(dr["BillingTypeName"], string.Empty);
-                    result += ReportUtility.ClipText(displayName, 20);
-                    result += "-";
-                    result += ReportUtility.ClipText(billingTypeName, 9);
-                    break;
-                case BillingCategory.Store:
-                    result = ReportUtility.ClipText(displayName, 30);
-                    break;
-            }
-            return result;
-        }
-
         private int GetServiceUnitBillingNumber()
         {
             DateTime Period = Report.EndPeriod.AddMonths(-1);
@@ -290,43 +270,43 @@ namespace LNF.WebApi.Billing.Models
         {
             return new ServiceUnitBillingReportItem()
             {
-                ReportType = RepositoryUtility.ConvertTo(drv["ReportType"], string.Empty),
-                ChargeType = RepositoryUtility.ConvertTo(drv["ChargeType"], string.Empty),
-                Period = RepositoryUtility.ConvertTo(drv["Period"], DateTime.MinValue),
-                CardType = RepositoryUtility.ConvertTo(drv["CardType"], string.Empty),
-                ShortCode = RepositoryUtility.ConvertTo(drv["ShortCode"], string.Empty),
-                Account = RepositoryUtility.ConvertTo(drv["Account"], string.Empty),
-                FundCode = RepositoryUtility.ConvertTo(drv["FundCode"], string.Empty),
-                DeptID = RepositoryUtility.ConvertTo(drv["DeptID"], string.Empty),
-                ProgramCode = RepositoryUtility.ConvertTo(drv["ProgramCode"], string.Empty),
-                Class = RepositoryUtility.ConvertTo(drv["Class"], string.Empty),
-                ProjectGrant = RepositoryUtility.ConvertTo(drv["ProjectGrant"], string.Empty),
-                VendorID = RepositoryUtility.ConvertTo(drv["VendorID"], string.Empty),
-                InvoiceDate = RepositoryUtility.ConvertTo(drv["InvoiceDate"], string.Empty),
-                InvoiceID = RepositoryUtility.ConvertTo(drv["InvoiceID"], string.Empty),
-                Uniqname = RepositoryUtility.ConvertTo(drv["Uniqname"], string.Empty),
-                LocationCode = RepositoryUtility.ConvertTo(drv["LocationCode"], string.Empty),
-                DeliverTo = RepositoryUtility.ConvertTo(drv["DeliverTo"], string.Empty),
-                VendorOrderNum = RepositoryUtility.ConvertTo(drv["VendorOrderNum"], string.Empty),
-                DepartmentalReferenceNumber = RepositoryUtility.ConvertTo(drv["DepartmentalReferenceNumber"], string.Empty),
-                TripOrEventNumber = RepositoryUtility.ConvertTo(drv["Trip/EventNumber"], string.Empty),
-                ItemID = RepositoryUtility.ConvertTo(drv["ItemID"], string.Empty),
-                ItemDescription = RepositoryUtility.ConvertTo(drv["ItemDescription"], string.Empty),
-                VendorItemID = RepositoryUtility.ConvertTo(drv["VendorItemID"], string.Empty),
-                ManufacturerName = RepositoryUtility.ConvertTo(drv["ManufacturerName"], string.Empty),
-                ModelNum = RepositoryUtility.ConvertTo(drv["ModelNum"], string.Empty),
-                SerialNum = RepositoryUtility.ConvertTo(drv["SerialNum"], string.Empty),
-                UMTagNum = RepositoryUtility.ConvertTo(drv["UMTagNum"], string.Empty),
-                QuantityVouchered = RepositoryUtility.ConvertTo(drv["QuantityVouchered"], string.Empty),
-                UnitOfMeasure = RepositoryUtility.ConvertTo(drv["UnitOfMeasure"], string.Empty),
-                UnitPrice = RepositoryUtility.ConvertTo(drv["UnitPrice"], string.Empty),
-                MerchandiseAmount = RepositoryUtility.ConvertTo(drv["MerchandiseAmount"], string.Empty),
-                VoucherComment = RepositoryUtility.ConvertTo(drv["VoucherComment"], string.Empty),
-                SubsidyDiscount = RepositoryUtility.ConvertTo(drv["SubsidyDiscount"], string.Empty),
-                BilledCharge = RepositoryUtility.ConvertTo(drv["BilledCharge"], string.Empty),
-                UsageCharge = RepositoryUtility.ConvertTo(drv["UsageCharge"], string.Empty),
-                CreditAccount = RepositoryUtility.ConvertTo(drv["CreditAccount"], string.Empty),
-                AccountID = RepositoryUtility.ConvertTo(drv["AccountID"], string.Empty)
+                ReportType = Utility.ConvertTo(drv["ReportType"], string.Empty),
+                ChargeType = Utility.ConvertTo(drv["ChargeType"], string.Empty),
+                Period = Utility.ConvertTo(drv["Period"], DateTime.MinValue),
+                CardType = Utility.ConvertTo(drv["CardType"], string.Empty),
+                ShortCode = Utility.ConvertTo(drv["ShortCode"], string.Empty),
+                Account = Utility.ConvertTo(drv["Account"], string.Empty),
+                FundCode = Utility.ConvertTo(drv["FundCode"], string.Empty),
+                DeptID = Utility.ConvertTo(drv["DeptID"], string.Empty),
+                ProgramCode = Utility.ConvertTo(drv["ProgramCode"], string.Empty),
+                Class = Utility.ConvertTo(drv["Class"], string.Empty),
+                ProjectGrant = Utility.ConvertTo(drv["ProjectGrant"], string.Empty),
+                VendorID = Utility.ConvertTo(drv["VendorID"], string.Empty),
+                InvoiceDate = Utility.ConvertTo(drv["InvoiceDate"], string.Empty),
+                InvoiceID = Utility.ConvertTo(drv["InvoiceID"], string.Empty),
+                Uniqname = Utility.ConvertTo(drv["Uniqname"], string.Empty),
+                LocationCode = Utility.ConvertTo(drv["LocationCode"], string.Empty),
+                DeliverTo = Utility.ConvertTo(drv["DeliverTo"], string.Empty),
+                VendorOrderNum = Utility.ConvertTo(drv["VendorOrderNum"], string.Empty),
+                DepartmentalReferenceNumber = Utility.ConvertTo(drv["DepartmentalReferenceNumber"], string.Empty),
+                TripOrEventNumber = Utility.ConvertTo(drv["Trip/EventNumber"], string.Empty),
+                ItemID = Utility.ConvertTo(drv["ItemID"], string.Empty),
+                ItemDescription = Utility.ConvertTo(drv["ItemDescription"], string.Empty),
+                VendorItemID = Utility.ConvertTo(drv["VendorItemID"], string.Empty),
+                ManufacturerName = Utility.ConvertTo(drv["ManufacturerName"], string.Empty),
+                ModelNum = Utility.ConvertTo(drv["ModelNum"], string.Empty),
+                SerialNum = Utility.ConvertTo(drv["SerialNum"], string.Empty),
+                UMTagNum = Utility.ConvertTo(drv["UMTagNum"], string.Empty),
+                QuantityVouchered = Utility.ConvertTo(drv["QuantityVouchered"], string.Empty),
+                UnitOfMeasure = Utility.ConvertTo(drv["UnitOfMeasure"], string.Empty),
+                UnitPrice = Utility.ConvertTo(drv["UnitPrice"], string.Empty),
+                MerchandiseAmount = Utility.ConvertTo(drv["MerchandiseAmount"], string.Empty),
+                VoucherComment = Utility.ConvertTo(drv["VoucherComment"], string.Empty),
+                SubsidyDiscount = Utility.ConvertTo(drv["SubsidyDiscount"], string.Empty),
+                BilledCharge = Utility.ConvertTo(drv["BilledCharge"], string.Empty),
+                UsageCharge = Utility.ConvertTo(drv["UsageCharge"], string.Empty),
+                CreditAccount = Utility.ConvertTo(drv["CreditAccount"], string.Empty),
+                AccountID = Utility.ConvertTo(drv["AccountID"], string.Empty)
             };
         }
     }

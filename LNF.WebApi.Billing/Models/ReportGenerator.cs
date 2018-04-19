@@ -1,4 +1,5 @@
 ﻿using LNF.Billing;
+using LNF.CommonTools;
 using LNF.Models.Billing;
 using LNF.Models.Billing.Reports.ServiceUnitBilling;
 using LNF.Repository;
@@ -12,7 +13,7 @@ namespace LNF.WebApi.Billing.Models
     public abstract class ReportGenerator<T> where T : ReportBase
     {
         private DataTable dtManagers;
-
+        protected IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
         protected List<DataTable> _ReportTables = new List<DataTable>();
         protected List<DataView> _ReportViews = new List<DataView>();
         protected string _CreditAccount;
@@ -90,12 +91,10 @@ namespace LNF.WebApi.Billing.Models
             switch (Report.BillingCategory)
             {
                 case BillingCategory.Tool:
-                    LineCostUtility.CalculateToolLineCost(dt);
-                    //ReportUtility.ApplyToolFormula(dt, Report.StartPeriod, Report.EndPeriod);
+                    BillingTypeManager.CalculateToolLineCost(dt);
                     break;
                 case BillingCategory.Room:
-                    LineCostUtility.CalculateRoomLineCost(dt);
-                    //ReportUtility.ApplyRoomFormula(dt);
+                    BillingTypeManager.CalculateRoomLineCost(dt);
                     break;
                 case BillingCategory.Store:
                     //do nothing
@@ -131,7 +130,7 @@ namespace LNF.WebApi.Billing.Models
             if (!string.IsNullOrEmpty(key) && ManagersData.Columns.Contains(key))
             {
                 if (drManagers.Length > 0)
-                    result = RepositoryUtility.ConvertTo(drManagers[0][key], "[unknown]");
+                    result = Utility.ConvertTo(drManagers[0][key], "[unknown]");
                 else
                     result = notFoundText;
             }
@@ -141,6 +140,32 @@ namespace LNF.WebApi.Billing.Models
             }
 
             return result;
+        }
+
+        protected virtual string GetItemDescription(DataRow dr, string prefix = null)
+        {
+            // The goal is a string with max length 30.
+            // prefix   :  6
+            // space    :  1
+            // name     : 18
+            // hyphens  :  2
+            // btype    :  3
+            // 6 + 1 + 18 + 2 + 3 = 30
+
+            // [2018-04-18 jg] As of now return the same string for Room, Tool, and Store charges.
+            //  Also the name + hyphens + btype length (23) should be the same for both SUB and JU reports
+
+            string displayName = Utility.ConvertTo(dr["DisplayName"], string.Empty);
+            string billingTypeName = string.Empty;
+
+            if (dr.Table.Columns.Contains("BillingTypeName"))
+                billingTypeName = "--" + Utility.ConvertTo(dr["BillingTypeName"], string.Empty);
+
+            string result = ReportUtility.ClipText(prefix, 6) + " "
+                + ReportUtility.ClipText(displayName, 18)
+                + ReportUtility.ClipText(billingTypeName, 5);
+
+            return result.Trim();
         }
     }
 }

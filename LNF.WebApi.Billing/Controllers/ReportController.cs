@@ -19,6 +19,9 @@ namespace LNF.WebApi.Billing.Controllers
     /// </summary>
     public class ReportController : ApiController
     {
+        protected IApportionmentManager ApportionmentManager => DA.Use<IApportionmentManager>();
+        protected IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+
         /// <summary>
         /// Send the monthly User Apportionment reminder via email. The return value is the number of emails sent
         /// </summary>
@@ -28,7 +31,7 @@ namespace LNF.WebApi.Billing.Controllers
         public int SendUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
         {
             string[] recipients = GetRecipients("UserApportionmentEmailRecipients");
-            int result = ApportionmentUtility.SendMonthlyApportionmentEmails(options.Period, options.Message, recipients, options.NoEmail);
+            int result = ApportionmentManager.SendMonthlyApportionmentEmails(options.Period, options.Message, recipients, options.NoEmail);
             return result;
         }
 
@@ -66,8 +69,8 @@ namespace LNF.WebApi.Billing.Controllers
             {
                 decimal total = 0;
 
-                total += toolUsage.Where(u => u.ChargeTypeID == x.ChargeTypeID && (u.BillingTypeID != BillingTypeUtility.Remote.BillingTypeID || includeRemote)).Sum(s => s.GetLineCost());
-                total += roomUsage.Where(u => u.ChargeTypeID == x.ChargeTypeID && (u.BillingTypeID != BillingTypeUtility.Remote.BillingTypeID || includeRemote)).Sum(s => s.GetLineCost());
+                total += toolUsage.Where(u => u.ChargeTypeID == x.ChargeTypeID && (u.BillingTypeID != BillingTypeManager.Remote.BillingTypeID || includeRemote)).Sum(s => BillingTypeManager.GetLineCost(s));
+                total += roomUsage.Where(u => u.ChargeTypeID == x.ChargeTypeID && (u.BillingTypeID != BillingTypeManager.Remote.BillingTypeID || includeRemote)).Sum(s => BillingTypeManager.GetLineCost(s));
                 total += storeUsage.Where(u => u.ChargeTypeID == x.ChargeTypeID).Sum(s => s.GetLineCost());
                 total += miscUsage.Where(u => u.Account.Org.OrgType.ChargeType.ChargeTypeID == x.ChargeTypeID).Sum(s => s.GetLineCost());
 

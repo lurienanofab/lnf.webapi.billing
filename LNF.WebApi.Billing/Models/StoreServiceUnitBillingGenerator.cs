@@ -1,4 +1,5 @@
-﻿using LNF.Models.Billing.Reports.ServiceUnitBilling;
+﻿using LNF.CommonTools;
+using LNF.Models.Billing.Reports.ServiceUnitBilling;
 using LNF.Repository;
 using System.Data;
 
@@ -44,8 +45,8 @@ namespace LNF.WebApi.Billing.Models
                 if (dtStoreBillingSSELCurrent.Rows.Count > 0)
                 {
                     //******** for CreditAccount of "SSEL Current", AccountID = 197, ShortCode = 182115, Number = 61835010000216112ADMIN21100U023432
-                    string CreditAccountShortCode = RepositoryUtility.ConvertTo(dtStoreBillingSSELCurrent.Rows[0]["CreditAccountShortCode"], string.Empty);   //this is the SSEL Current's shortcode
-                    string CreditAccount = RepositoryUtility.ConvertTo(dtStoreBillingSSELCurrent.Rows[0]["CreditAccount"], string.Empty);                     //this is the SSEL Current's Number
+                    string CreditAccountShortCode = Utility.ConvertTo(dtStoreBillingSSELCurrent.Rows[0]["CreditAccountShortCode"], string.Empty);   //this is the SSEL Current's shortcode
+                    string CreditAccount = Utility.ConvertTo(dtStoreBillingSSELCurrent.Rows[0]["CreditAccount"], string.Empty);                     //this is the SSEL Current's Number
                     ProcessTable(dtStoreBillingSSELCurrent);
                 }
             }

@@ -19,6 +19,9 @@ namespace LNF.WebApi.Billing.Controllers
     {
         private Stopwatch sw;
 
+        protected IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+        protected IToolBillingManager ToolBillingManager => DA.Use<IToolBillingManager>();
+
         private BillingProcessResult InitProcess(IProcessCommand command)
         {
             sw = Stopwatch.StartNew();
@@ -236,8 +239,8 @@ namespace LNF.WebApi.Billing.Controllers
             if (acct == null)
                 return false;
 
-            BillingType bt = BillingTypeUtility.GetBillingType(client, acct, model.Period);
-            ToolBillingUtility.UpdateBillingType(client, acct, bt, model.Period);
+            BillingType bt = BillingTypeManager.GetBillingType(client, acct, model.Period);
+            ToolBillingManager.UpdateBillingType(client.ClientID, acct.AccountID, bt.BillingTypeID, model.Period);
             RoomBillingUtility.UpdateBillingType(client, acct, bt, model.Period);
 
             return true;
@@ -411,9 +414,8 @@ namespace LNF.WebApi.Billing.Controllers
             }
 
             int result = DA.Current.SqlQuery(
-                string.Format("DELETE FROM {0}Data WHERE Period = :period AND ClientID = ISNULL(:clientId, ClientID) AND {1} = ISNULL(:record, {1});SELECT @@ROWCOUNT;", billingCategory, recordParam),
-                new { period, clientId, record }
-            ).Result<int>();
+                $"DELETE FROM {billingCategory}Data WHERE Period = :period AND ClientID = ISNULL(:clientId, ClientID) AND {recordParam} = ISNULL(:record, {1});SELECT @@ROWCOUNT;"
+            ).SetParameters(new { period, clientId, record }).Result<int>();
 
             return result;
         }

@@ -1,11 +1,18 @@
 ﻿using Microsoft.Owin;
+using Owin;
+using LNF;
+using LNF.Impl.DependencyInjection.Web;
 
 [assembly: OwinStartup(typeof(LNF.WebApi.Billing.Startup))]
 
 namespace LNF.WebApi.Billing
 {
-    /// <summary>
-    /// This class must be local to the application or there is an issue with routing when IIS resets.
-    /// </summary>
-    public class Startup : ApiOwinStartup { }
+    public class Startup : ApiOwinStartup
+    {
+        public override void Configuration(IAppBuilder app)
+        {
+            ServiceProvider.Current = IOC.Resolver.GetInstance<ServiceProvider>();
+            base.Configuration(app);
+        }
+    }
 }

@@ -12,11 +12,10 @@ namespace LNF.WebApi.Billing.Controllers
 {
     public class DefaultController : ApiController
     {
+        protected IToolBillingManager ToolBillingManager => DA.Use<IToolBillingManager>();
+
         [AllowAnonymous, Route("")]
-        public string Get()
-        {
-            return "billing-api";
-        }
+        public string Get() => "billing-api";
 
         [HttpPost, Route("update")]
         public IEnumerable<string> UpdateBilling([FromBody] UpdateBillingArgs args)
@@ -25,8 +24,10 @@ namespace LNF.WebApi.Billing.Controllers
 
             DateTime startTime = DateTime.Now;
 
-            var result = new List<string>();
-            result.Add(string.Format("Started at {0:yyyy-MM-dd HH:mm:ss}", startTime));
+            var result = new List<string>
+            {
+                $"Started at {startTime:yyyy-MM-dd HH:mm:ss}"
+            };
 
             Stopwatch sw;
 
@@ -171,7 +172,7 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpGet, Route("tool")]
         public IEnumerable<ToolBillingModel> GetToolBilling(DateTime period, int clientId)
         {
-            var items = ToolBillingUtility.SelectToolBilling(period, clientId);
+            var items = ToolBillingManager.SelectToolBilling(period, clientId);
             return items.Model<ToolBillingModel>();
         }
 

@@ -9,10 +9,12 @@ namespace LNF.WebApi.Billing.Controllers
 {
     public class AccountSubsidyController : ApiController
     {
+        protected IAccountSubsidyManager AccountSubsidyManager => DA.Use<IAccountSubsidyManager>();
+
         [Route("account-subsidy")]
         public AccountSubsidy[] GetAccountSubsidy(DateTime sd, DateTime ed)
         {
-            return AccountSubsidyUtility.GetActive(sd, ed).ToArray();
+            return AccountSubsidyManager.GetActive(sd, ed).ToArray();
         }
 
         [HttpGet, Route("account-subsidy/disable/{id}")]

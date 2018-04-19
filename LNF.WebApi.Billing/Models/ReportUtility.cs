@@ -1,4 +1,5 @@
-﻿using LNF.Billing;
+﻿using LNF.CommonTools;
+using LNF.Billing;
 using LNF.Models.Billing;
 using LNF.Repository;
 using System;
@@ -9,6 +10,8 @@ namespace LNF.WebApi.Billing.Models
 {
     public static class ReportUtility
     {
+        public static IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+
         [Obsolete("Use LNF.CommonTools.LineCostUtility.CalculateToolLineCost instead.")]
         public static void ApplyToolFormula(DataTable dt, DateTime startPeriod, DateTime endPeriod)
         {
@@ -25,7 +28,7 @@ namespace LNF.WebApi.Billing.Models
                 roomId = dr.Field<int>("RoomID");
                 isStarted = dr.Field<bool>("IsStarted");
 
-                if (BillingTypeUtility.IsMonthlyUserBillingType(billingTypeId))
+                if (BillingTypeManager.IsMonthlyUserBillingType(billingTypeId))
                 {
                     //Monthly User, charge mask maker for everyone
                     if (roomId == 6)
@@ -113,7 +116,7 @@ namespace LNF.WebApi.Billing.Models
                 roomId = dr.Field<int>("RoomID");
 
                 //1. Find out all Monthly type users and apply to Clean room
-                if (BillingTypeUtility.IsMonthlyUserBillingType(billingTypeId))
+                if (BillingTypeManager.IsMonthlyUserBillingType(billingTypeId))
                 {
                     if (roomId == 6)
                         dr["LineCost"] = dr.Field<decimal>("MonthlyRoomCharge");
@@ -121,7 +124,7 @@ namespace LNF.WebApi.Billing.Models
                         dr["LineCost"] = dr.Field<decimal>("RoomCharge") + dr.Field<decimal>("EntryCharge");
                 }
                 //2. The growers are charged with room fee only when they reserve and activate a tool
-                else if (BillingTypeUtility.IsGrowerUserBillingType(billingTypeId))
+                else if (BillingTypeManager.IsGrowerUserBillingType(billingTypeId))
                 {
                     if (roomId == 4)
                         dr["LineCost"] = dr.Field<decimal>("RoomCharge"); //Organics bay must be charged for growers as well
@@ -129,7 +132,7 @@ namespace LNF.WebApi.Billing.Models
                         dr["LineCost"] = (dr.Field<decimal>("AccountDays") * dr.Field<decimal>("RoomRate")) + dr.Field<decimal>("EntryCharge");
 
                 }
-                else if (billingTypeId == BillingTypeUtility.Other.BillingTypeID)
+                else if (billingTypeId == BillingTypeManager.Other.BillingTypeID)
                 {
                     dr["LineCost"] = 0;
                 }
@@ -216,7 +219,7 @@ namespace LNF.WebApi.Billing.Models
 
                 ndr["Number"] = dr["Number"];
                 ndr["ShortCode"] = dr["ShortCode"];
-                ndr["LineCost"] = RepositoryUtility.ConvertTo(dr["Quantity"], 0.0) * RepositoryUtility.ConvertTo(dr["UnitCost"], 0.0);
+                ndr["LineCost"] = Utility.ConvertTo(dr["Quantity"], 0.0) * Utility.ConvertTo(dr["UnitCost"], 0.0);
 
                 //it's possible store charge would come here
                 try
@@ -231,6 +234,9 @@ namespace LNF.WebApi.Billing.Models
 
         public static string ClipText(string text, int length)
         {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
             return (text.Length > length) ? text.Substring(0, length) : text;
         }
 
