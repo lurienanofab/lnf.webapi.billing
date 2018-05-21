@@ -7,35 +7,31 @@
   <configSections>
     <sectionGroup name="lnf">
       <section name="swagger" type="LNF.WebApi.Swagger.SwaggerConfigurationSection, LNF.WebApi"/>
-      <section name="providers" type="LNF.ProvidersSection, LNF"/>
-      <section name="redis" type="LNF.Impl.Redis.RedisConfigurationSection, LNF.Impl"/>
+      <section name="provider" type="LNF.ServiceProviderSection, LNF"/>
     </sectionGroup>
   </configSections>
 
   <lnf>
-    <swagger title="LNF.WebApi.Billing" version="v1"/>
-    <providers production="false">
-      <context type="LNF.Impl.WebContextProvider, LNF.Impl" loginUrl="/login"/>
-      <dataAccess type="LNF.Impl.NHibernateWebDataAccess, LNF.Impl"/>
-      <email type="LNF.Impl.Email.EmailProvider, LNF.Impl" host="127.0.0.1"/>
-      <log type="LNF.Impl.Logging.ServiceLogProvider, LNF.Impl" name="LNF.WebApi.Billing" enabled="true"/>
-      <modelFactory type="LNF.Impl.ModelFactory.ValueInjecterModelFactory, LNF.Impl"/>
-    </providers>
-    <redis>
-      <connection host="cachesvr" databaseId="5"/>
-    </redis>
+    <swagger title="Billing API" version="v1"/>
+    <provider production="false">
+      <context loginUrl="/login"/>
+      <dataAccess showSql="true" universalPassword="lnfmgr"/>
+      <email host="127.0.0.1" enableSsl="true" log="true"/>
+      <control host="xxxxx"/>
+      <log name="LNF.WebApi.Billing" enabled="true"/>
+    </provider>
   </lnf>
 
   <appSettings>
-    <add key="as:Issuer" value="http://lnf-dev.eecs.umich.edu"/>
+    <add key="as:Issuer" value="xxxxx"/>
     <add key="as:AudienceId" value="xxxxx" />
     <add key="as:AudienceSecret" value="xxxxx" />
-    <add key="ApiHost" value="http://lnf-dev.eecs.umich.edu/webapi/"/>
+    <add key="ApiHost" value="xxxxx"/>
     <add key="AboutPageHeaderText" value="LNF Billing API"/>
     <add key="UseParentRooms" value="true"/>
     <add key="UserApportionmentEmailRecipients" value=""/>
     <add key="MonthlyFinancialEmailRecipients" value="xxxxx"/>
-    <add key="MongoConnectionString" value="mongodb://xxxxx:xxxxx@localhost/"/>
+    <add key="MongoConnectionString" value="xxxxx"/>
     <add key="webpages:Version" value="3.0.0.0"/>
     <add key="webpages:Enabled" value="false"/>
     <add key="ClientValidationEnabled" value="true"/>
@@ -43,12 +39,12 @@
   </appSettings>
 
   <connectionStrings>
-    <add name="cnSselData" connectionString="Server=xxxxx;Database=xxxxx;User ID=xxxxx;Password=xxxxx" providerName="System.Data.SqlClient"/>
+    <add name="cnSselData" connectionString="xxxxx" providerName="System.Data.SqlClient"/>
   </connectionStrings>
 
   <system.web>
-    <compilation debug="true" targetFramework="4.6.1"/>
-    <httpRuntime targetFramework="4.6.1"/>
+    <compilation debug="true" targetFramework="4.7"/>
+    <httpRuntime targetFramework="4.7"/>
 
     <authentication mode="Forms">
       <forms name="sselAuth.cookie" path="/" loginUrl="/login" timeout="480" protection="All" slidingExpiration="true" domain="umich.edu" cookieless="UseCookies"/>
