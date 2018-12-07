@@ -1,8 +1,7 @@
-﻿using LNF.Billing;
-using LNF.CommonTools;
+﻿using LNF.CommonTools;
+using LNF.Models;
 using LNF.Models.Billing;
 using LNF.Models.Billing.Process;
-using LNF.Repository;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,8 +11,6 @@ namespace LNF.WebApi.Billing.Controllers
 {
     public class DefaultController : ApiController
     {
-        protected IToolBillingManager ToolBillingManager => DA.Use<IToolBillingManager>();
-
         [AllowAnonymous, Route("")]
         public string Get() => "billing-api";
 
@@ -45,14 +42,15 @@ namespace LNF.WebApi.Billing.Controllers
 
                 if (args.BillingCategory.HasFlag(BillingCategory.Tool))
                 {
-                    var tool = WriteToolDataManager.Create(sd, ed, args.ClientID, args.ResourceID);
+                    var toolDataClean = new WriteToolDataCleanProcess(sd, ed, args.ClientID);
+                    var toolData = new WriteToolDataProcess(sd, args.ClientID, args.ResourceID);
 
-                    sw.Restart();    
-                    tool.WriteToolDataClean();
+                    sw.Restart();
+                    toolDataClean.Start();
                     result.Add(string.Format("Completed ToolDataClean in {0}", sw.Elapsed));
 
                     sw.Restart();
-                    tool.WriteToolData();
+                    toolData.Start();
                     result.Add(string.Format("Completed ToolData in {0}", sw.Elapsed));
 
                     sw.Restart();
@@ -64,14 +62,15 @@ namespace LNF.WebApi.Billing.Controllers
 
                 if (args.BillingCategory.HasFlag(BillingCategory.Room))
                 {
-                    var room = WriteRoomDataManager.Create(sd, ed, args.ClientID, args.RoomID);
+                    var roomDataClean = new WriteRoomDataCleanProcess(sd, ed, args.ClientID);
+                    var roomData = new WriteRoomDataProcess(sd, args.ClientID, args.RoomID);
 
                     sw.Restart();
-                    room.WriteRoomDataClean();
+                    roomDataClean.Start();
                     result.Add(string.Format("Completed RoomDataClean in {0}", sw.Elapsed));
 
                     sw.Restart();
-                    room.WriteRoomData();
+                    roomData.Start();
                     result.Add(string.Format("Completed RoomData in {0}", sw.Elapsed));
 
                     sw.Restart();
@@ -83,14 +82,15 @@ namespace LNF.WebApi.Billing.Controllers
 
                 if (args.BillingCategory.HasFlag(BillingCategory.Store))
                 {
-                    var store = WriteStoreDataManager.Create(sd, ed, args.ClientID, args.RoomID);
+                    var storeDataClean = new WriteStoreDataCleanProcess(sd, ed, args.ClientID);
+                    var storeData = new WriteStoreDataProcess(sd, args.ClientID, args.ItemID);
 
                     sw.Restart();
-                    store.WriteStoreDataClean();
+                    storeDataClean.Start();
                     result.Add(string.Format("Completed StoreDataClean in {0}", sw.Elapsed));
 
                     sw.Restart();
-                    store.WriteStoreData();
+                    storeData.Start();
                     result.Add(string.Format("Completed StoreData in {0}", sw.Elapsed));
 
                     sw.Restart();
@@ -116,71 +116,45 @@ namespace LNF.WebApi.Billing.Controllers
         }
 
         [HttpPost, Route("update-client")]
-        public BillingProcessResult UpdateClientBilling(UpdateClientBillingCommand model)
+        public UpdateClientBillingResult UpdateClientBilling(UpdateClientBillingCommand model)
         {
             DateTime now = DateTime.Now;
 
             DateTime sd = model.Period;
             DateTime ed = model.Period.AddMonths(1);
 
-            var result = new BillingProcessResult()
+            var toolDataClean = new WriteToolDataCleanProcess(sd, ed, model.ClientID);
+            var toolData = new WriteToolDataProcess(sd, model.ClientID, 0);
+
+            var roomDataClean = new WriteRoomDataCleanProcess(sd, ed, model.ClientID);
+            var roomData = new WriteRoomDataProcess(sd, model.ClientID, 0);
+
+            var pr1 = toolDataClean.Start();
+            var pr2 = roomDataClean.Start();
+
+            var pr3 = toolData.Start();
+            var pr4 = roomData.Start();
+
+            bool isTemp = DateTime.Now.FirstOfMonth() == model.Period;
+
+            var pr5 = BillingDataProcessStep1.PopulateToolBilling(model.Period, model.ClientID, isTemp);
+            var pr6 = BillingDataProcessStep1.PopulateRoomBilling(model.Period, model.ClientID, isTemp);
+
+            PopulateSubsidyBillingProcessResult pr7 = null;
+
+            if (!isTemp)
+                pr7 = BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(model.Period, model.ClientID);
+
+            return new UpdateClientBillingResult
             {
-                StartDate = sd,
-                EndDate = ed,
-                ClientID = model.ClientID,
-                Command = "UpdateClientBilling",
-                Description = "Load all billing tables for a client and period.",
-                ErrorMessage = string.Empty
+                WriteToolDataCleanProcessResult = pr1,
+                WriteRoomDataCleanProcessResult = pr2,
+                WriteToolDataProcessResult = pr3,
+                WriteRoomDataProcessResult = pr4,
+                PopulateToolBillingProcessResult = pr5,
+                PopulateRoomBillingProcessResult = pr6,
+                PopulateSubsidyBillingProcessResult = pr7
             };
-
-            try
-            {
-                var toolManager = WriteToolDataManager.Create(sd, ed, model.ClientID, 0);
-                var roomManager = WriteRoomDataManager.Create(sd, ed, model.ClientID, 0);
-                //var storeManager = WriteStoreDataManager.Create(sd, ed, model.ClientID, 0);
-
-                toolManager.WriteToolDataClean();
-                roomManager.WriteRoomDataClean();
-                //storeManager.WriteStoreDataClean();
-
-                toolManager.WriteToolData();
-                roomManager.WriteRoomData();
-                //storeManager.WriteStoreData();
-
-                bool isTemp = DateTime.Now.FirstOfMonth() == model.Period;
-
-                BillingDataProcessStep1.PopulateToolBilling(model.Period, model.ClientID, isTemp);
-                BillingDataProcessStep1.PopulateRoomBilling(model.Period, model.ClientID, isTemp);
-                //BillingDataProcessStep1.PopulateStoreBilling(model.Period, isTemp);
-
-                if (!isTemp)
-                    BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(model.Period, model.ClientID);
-
-                result.Success = true;
-            }
-            catch (Exception ex)
-            {
-                result.ErrorMessage = ex.ToString();
-                result.Success = false;
-            }
-
-            result.TimeTaken = (DateTime.Now - now).TotalSeconds;
-
-            return result;
-        }
-
-        [HttpGet, Route("tool")]
-        public IEnumerable<ToolBillingModel> GetToolBilling(DateTime period, int clientId)
-        {
-            var items = ToolBillingManager.SelectToolBilling(period, clientId);
-            return items.Model<ToolBillingModel>();
-        }
-
-        [HttpGet, Route("room")]
-        public IEnumerable<RoomBillingModel> GetRoomBilling(DateTime period, int clientId)
-        {
-            var items = RoomBillingUtility.SelectRoomBilling(period, clientId);
-            return items.Model<RoomBillingModel>();
         }
     }
 }

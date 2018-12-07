@@ -1,7 +1,6 @@
-﻿using LNF.CommonTools;
-using LNF.Billing;
+﻿using LNF.Billing;
+using LNF.CommonTools;
 using LNF.Models.Billing;
-using LNF.Repository;
 using System;
 using System.Data;
 using System.Linq;
@@ -10,7 +9,7 @@ namespace LNF.WebApi.Billing.Models
 {
     public static class ReportUtility
     {
-        public static IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+        public static IBillingTypeManager BillingTypeManager => ServiceProvider.Current.Use<IBillingTypeManager>();
 
         [Obsolete("Use LNF.CommonTools.LineCostUtility.CalculateToolLineCost instead.")]
         public static void ApplyToolFormula(DataTable dt, DateTime startPeriod, DateTime endPeriod)

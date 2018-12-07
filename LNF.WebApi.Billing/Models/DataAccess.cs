@@ -1,55 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using LNF.Repository;
 using System.Data;
-using LNF.Repository;
-using LNF.CommonTools;
 
 namespace LNF.WebApi.Billing.Models
 {
     public static class DataAccess
     {
-        public static DataSet ToolBillingSelect(object parameters)
+        public static DataSet ToolBillingSelect(object parameters) => FillDataSet("dbo.ToolBilling_Select", parameters);
+
+        public static DataSet RoomBillingSelect(object parameters) => FillDataSet("dbo.RoomApportionmentInDaysMonthly_Select", parameters);
+
+        public static DataSet StoreBillingSelect(object parameters) => FillDataSet("dbo.StoreBilling_Select", parameters);
+
+        public static DataTable ClientAccountSelect(object parameters) => FillDataTable("dbo.ClientAccount_Select", parameters);
+
+        public static DataTable AccountSelect(object parameters) => FillDataTable("dbo.Account_Select", parameters);
+
+        public static DataTable MiscBillingChargeSelect(object parameters) => FillDataTable("dbo.MiscBillingCharge_Select", parameters);
+
+        private static DataSet FillDataSet(string proc, object parameters)
         {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataSet("ToolBilling_Select");
+            return DA.Command()
+                .Param(parameters)
+                .FillDataSet(proc);
         }
 
-        public static DataSet RoomBillingSelect(object parameters)
+        private static DataTable FillDataTable(string proc, object parameters)
         {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataSet("RoomApportionmentInDaysMonthly_Select");
-        }
-
-        public static DataSet StoreBillingSelect(object parameters)
-        {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataSet("StoreBilling_Select");
-        }
-
-        public static DataTable ClientAccountSelect(object parameters)
-        {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataTable("ClientAccount_Select");
-        }
-
-        public static DataTable AccountSelect(object parameters)
-        {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataTable("Account_Select");
-        }
-
-        public static DataTable MiscBillingChargeSelect(object parameters)
-        {
-            return DA.Current.GetAdapter()
-                .ApplyParameters(parameters)
-                .FillDataTable("MiscBillingCharge_Select");
+            return DA.Command()
+                .Param(parameters)
+                .FillDataTable(proc);
         }
     }
 }

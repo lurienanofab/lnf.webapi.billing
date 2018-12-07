@@ -1,7 +1,9 @@
 ﻿using LNF.Billing;
+using LNF.Models.Billing;
 using LNF.Repository;
 using LNF.Repository.Billing;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 
@@ -9,24 +11,24 @@ namespace LNF.WebApi.Billing.Controllers
 {
     public class AccountSubsidyController : ApiController
     {
-        protected IAccountSubsidyManager AccountSubsidyManager => DA.Use<IAccountSubsidyManager>();
+        protected IAccountSubsidyManager AccountSubsidyManager => ServiceProvider.Current.Use<IAccountSubsidyManager>();
 
         [Route("account-subsidy")]
-        public AccountSubsidy[] GetAccountSubsidy(DateTime sd, DateTime ed)
+        public IEnumerable<AccountSubsidyItem> GetAccountSubsidy(DateTime sd, DateTime ed)
         {
-            return AccountSubsidyManager.GetActive(sd, ed).ToArray();
+            return AccountSubsidyManager.GetActive(sd, ed).AsQueryable().CreateAccountSubsidyItems();
         }
 
-        [HttpGet, Route("account-subsidy/disable/{id}")]
-        public AccountSubsidy DisableAccountSubsidy(int id)
+        [HttpGet, Route("account-subsidy/disable/{accountSubsidyId}")]
+        public AccountSubsidyItem DisableAccountSubsidy(int accountSubsidyId)
         {
-            var entity = DA.Current.Single<AccountSubsidy>(id);
+            var entity = DA.Current.Single<AccountSubsidy>(accountSubsidyId);
             entity.DisableDate = DateTime.Now.Date.AddDays(1);
-            return entity;
+            return entity.CreateAccountSubsidyItem();
         }
 
         [HttpPost, Route("account-subsidy")]
-        public AccountSubsidy AddAccountSubsidy([FromBody] AccountSubsidy model)
+        public AccountSubsidyItem AddAccountSubsidy([FromBody] AccountSubsidyItem model)
         {
             var existing = DA.Current.Query<AccountSubsidy>().Where(x => x.AccountID == model.AccountID && x.DisableDate == null);
 
@@ -46,7 +48,7 @@ namespace LNF.WebApi.Billing.Controllers
 
             DA.Current.Insert(entity);
 
-            return entity;
+            return entity.CreateAccountSubsidyItem();
         }
     }
 }

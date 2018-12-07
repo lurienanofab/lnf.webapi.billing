@@ -19,8 +19,8 @@ namespace LNF.WebApi.Billing.Controllers
     /// </summary>
     public class ReportController : ApiController
     {
-        protected IApportionmentManager ApportionmentManager => DA.Use<IApportionmentManager>();
-        protected IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+        protected IApportionmentManager ApportionmentManager => ServiceProvider.Current.Use<IApportionmentManager>();
+        protected IBillingTypeManager BillingTypeManager => ServiceProvider.Current.Use<IBillingTypeManager>();
 
         /// <summary>
         /// Send the monthly User Apportionment reminder via email. The return value is the number of emails sent
@@ -28,11 +28,16 @@ namespace LNF.WebApi.Billing.Controllers
         /// <param name="options">Options used for creating and sending the report</param>
         /// <returns>The number of emails sent</returns>
         [HttpPost, Route("report/user-apportionment")]
-        public int SendUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
+        public SendMonthlyApportionmentEmailsProcessResult SendUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
         {
-            string[] recipients = GetRecipients("UserApportionmentEmailRecipients");
-            int result = ApportionmentManager.SendMonthlyApportionmentEmails(options.Period, options.Message, recipients, options.NoEmail);
+            var result = ApportionmentManager.SendMonthlyApportionmentEmails(options.Period, options.Message, options.NoEmail);
             return result;
+        }
+
+        [HttpGet, Route("report/user-apportionment/view")]
+        public IEnumerable<ReportEmail> ViewUserApportionmentReport(DateTime period, string message = null)
+        {
+            return ApportionmentManager.GetMonthlyApportionmentEmails(period, message);
         }
 
         /// <summary>
@@ -41,21 +46,25 @@ namespace LNF.WebApi.Billing.Controllers
         /// <param name="options">Options used for creating and sending the report</param>
         /// <returns>The number of emails sent</returns>
         [HttpPost, Route("report/financial-manager")]
-        public int SendFinancialManagerReport([FromBody] FinancialManagerReportOptions options)
+        public SendMonthlyUserUsageEmailsProcessResult SendFinancialManagerReport([FromBody] FinancialManagerReportOptions options)
         {
-            string[] recipients = GetRecipients("MonthlyFinancialEmailRecipients");
-            int result = FinancialManagerUtility.SendMonthlyUserUsageEmails(options.Period, new MonthlyEmailOptions()
+            var result = FinancialManagerUtility.SendMonthlyUserUsageEmails(options.Period, options.ClientID, options.ManagerOrgID, new MonthlyEmailOptions
             {
                 IncludeManager = options.IncludeManager,
-                Message = options.Message,
-                Recipients = recipients
+                Message = options.Message
             });
 
             return result;
         }
 
+        [HttpGet, Route("report/financial-manager/view")]
+        public IEnumerable<ReportEmail> ViewFinancialManagerReport(DateTime period, int clientId = 0, int managerOrgId = 0, string message = null)
+        {
+            return FinancialManagerUtility.GetMonthlyUserUsageEmails(period, clientId, managerOrgId, message);
+        }
+
         [Route("report/billing-summary")]
-        public BillingSummaryItem[] GetBillingSummary(DateTime sd, DateTime ed, bool includeRemote = false, int clientId = 0)
+        public IEnumerable<BillingSummaryItem> GetBillingSummary(DateTime sd, DateTime ed, bool includeRemote = false, int clientId = 0)
         {
             ChargeType[] chargeTypes = DA.Current.Query<ChargeType>().ToArray();
 
@@ -138,24 +147,18 @@ namespace LNF.WebApi.Billing.Controllers
         }
 
         [Route("report/regular-exception")]
-        public IEnumerable<RegularException> GetRegularExceptions(DateTime period, int clientId = 0)
+        public IEnumerable<RegularExceptionItem> GetRegularExceptions(DateTime period, int clientId = 0)
         {
-            IQueryable<RegularException> result;
+            IQueryable<RegularException> query;
 
             if (clientId > 0)
-                result = DA.Current.Query<RegularException>().Where(x => x.Period == period && x.ClientID == clientId);
+                query = DA.Current.Query<RegularException>().Where(x => x.Period == period && x.ClientID == clientId);
             else
-                result = DA.Current.Query<RegularException>().Where(x => x.Period == period);
+                query = DA.Current.Query<RegularException>().Where(x => x.Period == period);
 
-            return result.ToList();
-        }
+            var result = query.CreateRegularExceptionItems();
 
-        private string[] GetRecipients(string key)
-        {
-            if (string.IsNullOrEmpty(ConfigurationManager.AppSettings[key]))
-                return null;
-            else
-                return ConfigurationManager.AppSettings[key].Split(',');
+            return result;
         }
     }
 }

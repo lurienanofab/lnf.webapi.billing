@@ -13,7 +13,7 @@ namespace LNF.WebApi.Billing.Models
     public abstract class ReportGenerator<T> where T : ReportBase
     {
         private DataTable dtManagers;
-        protected IBillingTypeManager BillingTypeManager => DA.Use<IBillingTypeManager>();
+        protected IBillingTypeManager BillingTypeManager => ServiceProvider.Current.Use<IBillingTypeManager>();
         protected List<DataTable> _ReportTables = new List<DataTable>();
         protected List<DataView> _ReportViews = new List<DataView>();
         protected string _CreditAccount;
