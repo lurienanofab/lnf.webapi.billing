@@ -18,14 +18,17 @@ namespace LNF.WebApi.Billing.Controllers
         [Route("room/data/clean")]
         public IEnumerable<RoomDataCleanItem> GetRoomDataClean(DateTime sd, DateTime ed, int clientId = 0, int roomId = 0)
         {
-            var query = DA.Current.Query<RoomDataClean>()
-                .Where(x => x.EntryDT < ed && x.ExitDT > sd
-                    && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
-                    && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<RoomDataClean>()
+                    .Where(x => x.EntryDT < ed && x.ExitDT > sd
+                        && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
+                        && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
 
-            var result = query.CreateRoomDataCleanItems();
+                var result = query.CreateRoomDataCleanItems();
 
-            return result;
+                return result;
+            }
         }
 
         [HttpGet, Route("room/data/create")]
@@ -33,42 +36,48 @@ namespace LNF.WebApi.Billing.Controllers
         {
             // Does the processing without saving anything to the database.
 
-            var proc = new WriteRoomDataProcess(period, clientId, roomId);
-            var dtExtract = proc.Extract();
-            var dtTransform = proc.Transform(dtExtract);
-
-            var result = dtTransform.AsEnumerable().Select(x => new RoomDataItem
+            using (DA.StartUnitOfWork())
             {
-                RoomDataID = x.Field<int>("RoomDataID"),
-                Period = x.Field<DateTime>("Period"),
-                ClientID = x.Field<int>("ClientID"),
-                RoomID = x.Field<int>("RoomID"),
-                ParentID = x.Field<int?>("ParentID"),
-                PassbackRoom = x.Field<bool>("PassbackRoom"),
-                EvtDate = x.Field<DateTime>("EvtDate"),
-                AccountID = x.Field<int>("AccountID"),
-                Entries = x.Field<double>("Entries"),
-                Hours = x.Field<double>("Hours"),
-                Days = x.Field<double>("Days"),
-                Months = x.Field<double>("Months"),
-                DataSource = x.Field<int>("DataSource"),
-                HasToolUsage = x.Field<bool>("HasToolUsage"),
-            }).ToList();
+                var proc = new WriteRoomDataProcess(period, clientId, roomId);
+                var dtExtract = proc.Extract();
+                var dtTransform = proc.Transform(dtExtract);
 
-            return result;
+                var result = dtTransform.AsEnumerable().Select(x => new RoomDataItem
+                {
+                    RoomDataID = x.Field<int>("RoomDataID"),
+                    Period = x.Field<DateTime>("Period"),
+                    ClientID = x.Field<int>("ClientID"),
+                    RoomID = x.Field<int>("RoomID"),
+                    ParentID = x.Field<int?>("ParentID"),
+                    PassbackRoom = x.Field<bool>("PassbackRoom"),
+                    EvtDate = x.Field<DateTime>("EvtDate"),
+                    AccountID = x.Field<int>("AccountID"),
+                    Entries = x.Field<double>("Entries"),
+                    Hours = x.Field<double>("Hours"),
+                    Days = x.Field<double>("Days"),
+                    Months = x.Field<double>("Months"),
+                    DataSource = x.Field<int>("DataSource"),
+                    HasToolUsage = x.Field<bool>("HasToolUsage"),
+                }).ToList();
+
+                return result;
+            }
         }
 
         [Route("room/data")]
         public IEnumerable<RoomDataItem> GetRoomData(DateTime period, int clientId = 0, int roomId = 0)
         {
-            var query = DA.Current.Query<RoomData>()
-                .Where(x => x.Period == period
-                    && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
-                    && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<RoomData>()
+                    .Where(x => x.Period == period
+                        && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
+                        && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
 
-            var result = query.CreateRoomDataItems();
+                var result = query.CreateRoomDataItems();
 
-            return result;
+                return result;
+            }
         }
 
         [Route("room/create")]
@@ -77,41 +86,47 @@ namespace LNF.WebApi.Billing.Controllers
             // Does the same processing as BillingDataProcessStep1.PopulateRoomBilling (transforms
             // a RoomData record into a RoomBilling record) without saving anything to the database.
 
-            DataSet ds;
-            DataTable dt;
-
-            var useParentRooms = bool.Parse(Utility.GetRequiredAppSetting("UseParentRooms"));
-            var temp = period == DateTime.Now.FirstOfMonth();
-
-            var result = new List<RoomBillingItem>();
-
-            ds = BillingDataProcessStep1.GetRoomData(period);
-            dt = BillingDataProcessStep1.LoadRoomBilling(ds, period, clientId, temp);
-            result.AddRange(CreateRoomBillingItems(dt, temp));
-
-            if (useParentRooms)
+            using (DA.StartUnitOfWork())
             {
-                ds = BillingDataProcessStep1.GetRoomData(period, BillingDataProcessStep1.FOR_PARENT_ROOMS);
+                DataSet ds;
+                DataTable dt;
+
+                var useParentRooms = bool.Parse(Utility.GetRequiredAppSetting("UseParentRooms"));
+                var temp = period == DateTime.Now.FirstOfMonth();
+
+                var result = new List<RoomBillingItem>();
+
+                ds = BillingDataProcessStep1.GetRoomData(period);
                 dt = BillingDataProcessStep1.LoadRoomBilling(ds, period, clientId, temp);
                 result.AddRange(CreateRoomBillingItems(dt, temp));
-            }
 
-            return result;
+                if (useParentRooms)
+                {
+                    ds = BillingDataProcessStep1.GetRoomData(period, BillingDataProcessStep1.FOR_PARENT_ROOMS);
+                    dt = BillingDataProcessStep1.LoadRoomBilling(ds, period, clientId, temp);
+                    result.AddRange(CreateRoomBillingItems(dt, temp));
+                }
+
+                return result;
+            }
         }
 
         [Route("room")]
         public IEnumerable<RoomBillingItem> GetRoomBilling(DateTime period, int clientId = 0, int roomId = 0)
         {
-            var temp = period == DateTime.Now.FirstOfMonth();
+            using (DA.StartUnitOfWork())
+            {
+                var temp = period == DateTime.Now.FirstOfMonth();
 
-            var query = GetRoomBillingQuery(temp).Where(x =>
-                x.Period == period
-                && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
-                && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
+                var query = GetRoomBillingQuery(temp).Where(x =>
+                    x.Period == period
+                    && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
+                    && x.RoomID == (roomId > 0 ? roomId : x.RoomID));
 
-            var result = query.CreateRoomBillingItems();
+                var result = query.CreateRoomBillingItems();
 
-            return result;
+                return result;
+            }
         }
 
         private IQueryable<IRoomBilling> GetRoomBillingQuery(bool temp)

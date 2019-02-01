@@ -6,6 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Web.Http.Controllers;
 
 namespace LNF.WebApi.Billing.Controllers
 {
@@ -16,39 +20,46 @@ namespace LNF.WebApi.Billing.Controllers
         [Route("account-subsidy")]
         public IEnumerable<AccountSubsidyItem> GetAccountSubsidy(DateTime sd, DateTime ed)
         {
-            return AccountSubsidyManager.GetActive(sd, ed).AsQueryable().CreateAccountSubsidyItems();
+            using (DA.StartUnitOfWork())
+                return AccountSubsidyManager.GetActive(sd, ed).AsQueryable().CreateAccountSubsidyItems();
         }
 
         [HttpGet, Route("account-subsidy/disable/{accountSubsidyId}")]
         public AccountSubsidyItem DisableAccountSubsidy(int accountSubsidyId)
         {
-            var entity = DA.Current.Single<AccountSubsidy>(accountSubsidyId);
-            entity.DisableDate = DateTime.Now.Date.AddDays(1);
-            return entity.CreateAccountSubsidyItem();
+            using (DA.StartUnitOfWork())
+            {
+                var entity = DA.Current.Single<AccountSubsidy>(accountSubsidyId);
+                entity.DisableDate = DateTime.Now.Date.AddDays(1);
+                return entity.CreateAccountSubsidyItem();
+            }
         }
 
         [HttpPost, Route("account-subsidy")]
         public AccountSubsidyItem AddAccountSubsidy([FromBody] AccountSubsidyItem model)
         {
-            var existing = DA.Current.Query<AccountSubsidy>().Where(x => x.AccountID == model.AccountID && x.DisableDate == null);
-
-            if (existing != null && existing.Count() > 0)
+            using (DA.StartUnitOfWork())
             {
-                foreach (var item in existing)
-                    item.DisableDate = model.EnableDate;
+                var existing = DA.Current.Query<AccountSubsidy>().Where(x => x.AccountID == model.AccountID && x.DisableDate == null);
+
+                if (existing != null && existing.Count() > 0)
+                {
+                    foreach (var item in existing)
+                        item.DisableDate = model.EnableDate;
+                }
+
+                var entity = new AccountSubsidy()
+                {
+                    AccountID = model.AccountID,
+                    UserPaymentPercentage = model.UserPaymentPercentage,
+                    CreatedDate = DateTime.Now,
+                    EnableDate = model.EnableDate,
+                };
+
+                DA.Current.Insert(entity);
+
+                return entity.CreateAccountSubsidyItem();
             }
-
-            var entity = new AccountSubsidy()
-            {
-                AccountID = model.AccountID,
-                UserPaymentPercentage = model.UserPaymentPercentage,
-                CreatedDate = DateTime.Now,
-                EnableDate = model.EnableDate,
-            };
-
-            DA.Current.Insert(entity);
-
-            return entity.CreateAccountSubsidyItem();
         }
     }
 }

@@ -16,22 +16,28 @@ namespace LNF.WebApi.Billing.Controllers
         [Route("tool/data/clean")]
         public IEnumerable<ToolDataCleanItem> GetToolDataClean(DateTime sd, DateTime ed, int clientId = 0, int resourceId = 0)
         {
-            var query = DA.Current.Query<ToolDataClean>()
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<ToolDataClean>()
                 .Where(x => (x.BeginDateTime < ed && x.EndDateTime > sd || x.ActualBeginDateTime < ed && x.ActualEndDateTime > ed)
                     && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
                     && x.ResourceID == (resourceId > 0 ? resourceId : x.ResourceID));
 
-            var result = query.CreateToolDataCleanItems();
+                var result = query.CreateToolDataCleanItems();
 
-            return result;
+                return result;
+            }
         }
 
         [Route("tool/data/clean/{reservationId}")]
         public ToolDataCleanItem GetToolDataClean(int reservationId)
         {
-            var query = DA.Current.Query<ToolDataClean>().Where(x => x.ReservationID == reservationId);
-            var result = query.CreateToolDataCleanItems().FirstOrDefault();
-            return result;
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<ToolDataClean>().Where(x => x.ReservationID == reservationId);
+                var result = query.CreateToolDataCleanItems().FirstOrDefault();
+                return result;
+            }
         }
 
         [HttpGet, Route("tool/data/create")]
@@ -39,72 +45,84 @@ namespace LNF.WebApi.Billing.Controllers
         {
             // Does the processing without saving anything to the database.
 
-            var proc = new WriteToolDataProcess(period, clientId, resourceId);
-            var dtExtract = proc.Extract();
-            var dtTransform = proc.Transform(dtExtract);
-
-            var result = dtTransform.AsEnumerable().Select(x => new ToolDataItem
+            using (DA.StartUnitOfWork())
             {
-                ToolDataID = x.Field<int>("ToolDataID"),
-                Period = x.Field<DateTime>("Period"),
-                ClientID = x.Field<int>("ClientID"),
-                ResourceID = x.Field<int>("ResourceID"),
-                RoomID = x.Field<int?>("RoomID"),
-                ActDate = x.Field<DateTime>("ActDate"),
-                AccountID = x.Field<int>("AccountID"),
-                Uses = x.Field<double>("Uses"),
-                SchedDuration = x.Field<double>("SchedDuration"),
-                ActDuration = x.Field<double>("ActDuration"),
-                OverTime = x.Field<double>("OverTime"),
-                Days = x.Field<double?>("Days"),
-                Months = x.Field<double?>("Months"),
-                IsStarted = x.Field<bool>("IsStarted"),
-                ChargeMultiplier = x.Field<double>("ChargeMultiplier"),
-                ReservationID = x.Field<int?>("ReservationID"),
-                ChargeDuration = x.Field<double>("ChargeDuration"),
-                TransferredDuration = x.Field<double>("TransferredDuration"),
-                MaxReservedDuration = x.Field<double>("MaxReservedDuration"),
-                ChargeBeginDateTime = x.Field<DateTime?>("ChargeBeginDateTime"),
-                ChargeEndDateTime = x.Field<DateTime?>("ChargeEndDateTime"),
-                IsActive = x.Field<bool>("IsActive"),
-                IsCancelledBeforeAllowedTime = x.Field<bool?>("IsCancelledBeforeAllowedTime")
-            }).ToList();
+                var proc = new WriteToolDataProcess(period, clientId, resourceId);
+                var dtExtract = proc.Extract();
+                var dtTransform = proc.Transform(dtExtract);
 
-            return result;
+                var result = dtTransform.AsEnumerable().Select(x => new ToolDataItem
+                {
+                    ToolDataID = x.Field<int>("ToolDataID"),
+                    Period = x.Field<DateTime>("Period"),
+                    ClientID = x.Field<int>("ClientID"),
+                    ResourceID = x.Field<int>("ResourceID"),
+                    RoomID = x.Field<int?>("RoomID"),
+                    ActDate = x.Field<DateTime>("ActDate"),
+                    AccountID = x.Field<int>("AccountID"),
+                    Uses = x.Field<double>("Uses"),
+                    SchedDuration = x.Field<double>("SchedDuration"),
+                    ActDuration = x.Field<double>("ActDuration"),
+                    OverTime = x.Field<double>("OverTime"),
+                    Days = x.Field<double?>("Days"),
+                    Months = x.Field<double?>("Months"),
+                    IsStarted = x.Field<bool>("IsStarted"),
+                    ChargeMultiplier = x.Field<double>("ChargeMultiplier"),
+                    ReservationID = x.Field<int?>("ReservationID"),
+                    ChargeDuration = x.Field<double>("ChargeDuration"),
+                    TransferredDuration = x.Field<double>("TransferredDuration"),
+                    MaxReservedDuration = x.Field<double>("MaxReservedDuration"),
+                    ChargeBeginDateTime = x.Field<DateTime?>("ChargeBeginDateTime"),
+                    ChargeEndDateTime = x.Field<DateTime?>("ChargeEndDateTime"),
+                    IsActive = x.Field<bool>("IsActive"),
+                    IsCancelledBeforeAllowedTime = x.Field<bool?>("IsCancelledBeforeAllowedTime")
+                }).ToList();
+
+                return result;
+            }
         }
 
 
         [HttpGet, Route("tool/data/create/{reservationId}")]
         public IEnumerable<ToolDataItem> CreateToolData(int reservationId)
         {
-            var tdc = DA.Current.Query<ToolDataClean>().FirstOrDefault(x => x.ReservationID == reservationId);
-            if (tdc == null) return null;
-            var period = tdc.GetChargeBeginDateTime().FirstOfMonth();
-            // Doing it the lazy way for one reservation: create all for the client/tool and then return one.
-            var items = CreateToolData(period, tdc.ClientID, tdc.ResourceID);
-            var result = items.Where(x => x.ReservationID == reservationId);
-            return result;
+            using (DA.StartUnitOfWork())
+            {
+                var tdc = DA.Current.Query<ToolDataClean>().FirstOrDefault(x => x.ReservationID == reservationId);
+                if (tdc == null) return null;
+                var period = tdc.GetChargeBeginDateTime().FirstOfMonth();
+                // Doing it the lazy way for one reservation: create all for the client/tool and then return one.
+                var items = CreateToolData(period, tdc.ClientID, tdc.ResourceID);
+                var result = items.Where(x => x.ReservationID == reservationId);
+                return result;
+            }
         }
 
         [Route("tool/data")]
         public IEnumerable<ToolDataItem> GetToolData(DateTime period, int clientId = 0, int resourceId = 0)
         {
-            var query = DA.Current.Query<ToolData>()
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<ToolData>()
                 .Where(x => x.Period == period
                     && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
                     && x.ResourceID == (resourceId > 0 ? resourceId : x.ResourceID));
 
-            var result = query.CreateToolDataItems();
+                var result = query.CreateToolDataItems();
 
-            return result;
+                return result;
+            }
         }
 
         [Route("tool/data/{reservationId}")]
         public IEnumerable<ToolDataItem> GetToolData(int reservationId)
         {
-            var query = DA.Current.Query<ToolData>().Where(x => x.ReservationID == reservationId);
-            var result = query.CreateToolDataItems();
-            return result;
+            using (DA.StartUnitOfWork())
+            {
+                var query = DA.Current.Query<ToolData>().Where(x => x.ReservationID == reservationId);
+                var result = query.CreateToolDataItems();
+                return result;
+            }
         }
 
         [HttpGet, Route("tool/create")]
@@ -113,13 +131,16 @@ namespace LNF.WebApi.Billing.Controllers
             // Does the same processing as BillingDataProcessStep1.PopulateToolBilling (transforms
             // a ToolData record into a ToolBilling record) without saving anything to the database.
 
-            var temp = period == DateTime.Now.FirstOfMonth();
+            using (DA.StartUnitOfWork())
+            {
+                var temp = period == DateTime.Now.FirstOfMonth();
 
-            IToolBilling[] source = BillingDataProcessStep1.GetToolData(period, clientId, 0, temp);
+                IToolBilling[] source = BillingDataProcessStep1.GetToolData(period, clientId, 0, temp);
 
-            var result = CreateToolBillingItems(source, temp);
+                var result = CreateToolBillingItems(source, temp);
 
-            return result;
+                return result;
+            }
         }
 
         [HttpGet, Route("tool/create/{reservationId}")]
@@ -128,51 +149,60 @@ namespace LNF.WebApi.Billing.Controllers
             // Does the same processing as BillingDataProcessStep1.PopulateToolBilling (transforms
             // a ToolData record into a ToolBilling record) without saving anything to the database.
 
-            var td = DA.Current.Query<ToolData>().FirstOrDefault(x => x.ReservationID == reservationId);
+            using (DA.StartUnitOfWork())
+            {
+                var td = DA.Current.Query<ToolData>().FirstOrDefault(x => x.ReservationID == reservationId);
 
-            if (td == null) return null;
+                if (td == null) return null;
 
-            var period = td.Period;
-            var temp = period == DateTime.Now.FirstOfMonth();
+                var period = td.Period;
+                var temp = period == DateTime.Now.FirstOfMonth();
 
-            IToolBilling[] source = BillingDataProcessStep1.GetToolData(period, 0, reservationId, temp);
+                IToolBilling[] source = BillingDataProcessStep1.GetToolData(period, 0, reservationId, temp);
 
-            var result = CreateToolBillingItems(source, temp);
+                var result = CreateToolBillingItems(source, temp);
 
-            return result;
+                return result;
+            }
         }
 
         [Route("tool")]
         public IEnumerable<ToolBillingItem> GetToolBilling(DateTime period, int clientId = 0, int resourceId = 0)
         {
-            var temp = period == DateTime.Now.FirstOfMonth();
+            using (DA.StartUnitOfWork())
+            {
+                var temp = period == DateTime.Now.FirstOfMonth();
 
-            var query = GetToolBillingQuery(temp).Where(x =>
-                x.Period == period
-                && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
-                && x.ResourceID == (resourceId > 0 ? resourceId : x.ResourceID));
+                var query = GetToolBillingQuery(temp).Where(x =>
+                    x.Period == period
+                    && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
+                    && x.ResourceID == (resourceId > 0 ? resourceId : x.ResourceID));
 
-            var result = query.CreateToolBillingItems();
+                var result = query.CreateToolBillingItems();
 
-            return result;
+                return result;
+            }
         }
 
         [Route("tool/{reservationId}")]
         public IEnumerable<ToolBillingItem> GetToolBilling(int reservationId)
         {
-            var td = DA.Current.Query<ToolData>().Where(x => x.ReservationID == reservationId).ToList();
+            using (DA.StartUnitOfWork())
+            {
+                var td = DA.Current.Query<ToolData>().Where(x => x.ReservationID == reservationId).ToList();
 
-            if (td.Count == 0) return null;
+                if (td.Count == 0) return null;
 
-            var period = td.First().Period;
+                var period = td.First().Period;
 
-            var temp = period == DateTime.Now.FirstOfMonth();
+                var temp = period == DateTime.Now.FirstOfMonth();
 
-            var query = GetToolBillingQuery(temp).Where(x => x.ReservationID == reservationId);
+                var query = GetToolBillingQuery(temp).Where(x => x.ReservationID == reservationId);
 
-            var result = query.CreateToolBillingItems();
+                var result = query.CreateToolBillingItems();
 
-            return result;
+                return result;
+            }
         }
 
         private IQueryable<IToolBilling> GetToolBillingQuery(bool temp)
@@ -186,7 +216,7 @@ namespace LNF.WebApi.Billing.Controllers
         private IEnumerable<ToolBillingItem> CreateToolBillingItems(IEnumerable<IToolBilling> source, bool temp)
         {
             foreach (IToolBilling tb in source)
-                BillingDataProcessStep1.CalculateToolBillingCharges(tb, temp);
+                BillingDataProcessStep1.CalculateToolBillingCharges(tb);
 
             var result = source.AsQueryable().CreateToolBillingItems();
 

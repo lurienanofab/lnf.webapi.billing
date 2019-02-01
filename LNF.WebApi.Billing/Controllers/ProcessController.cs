@@ -26,37 +26,28 @@ namespace LNF.WebApi.Billing.Controllers
         /// <param name="model">The process command</param>
         /// <returns>A result object</returns>
         [HttpPost, Route("process/step1")]
-        public ProcessResult BillingProcessStep1([FromBody] BillingProcessStep1Command model)
+        public BillingProcessStep1Result BillingProcessStep1([FromBody] BillingProcessStep1Command model)
         {
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            int clientId = (model.ClientID == 0) ? -1 : model.ClientID;
-
-            ProcessResult result;
-
-            switch (model.BillingCategory)
+            using (DA.StartUnitOfWork())
             {
-                case BillingCategory.Tool:
-                    result = BillingDataProcessStep1.PopulateToolBilling(model.Period, model.ClientID, model.IsTemp);
-                    break;
-                case BillingCategory.Room:
-                    result = BillingDataProcessStep1.PopulateRoomBilling(model.Period, model.ClientID, model.IsTemp);
-                    break;
-                case BillingCategory.Store:
-                    result = BillingDataProcessStep1.PopulateStoreBilling(model.Period, model.IsTemp);
-                    break;
-                default:
-                    throw new Exception($"Unknown billing category: {model.BillingCategory}");
+                int clientId = (model.ClientID == 0) ? -1 : model.ClientID;
+
+                BillingProcessStep1Result result = new BillingProcessStep1Result();
+
+                if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                    result.PopulateToolBillingProcessResult = BillingDataProcessStep1.PopulateToolBilling(model.Period, model.ClientID, model.IsTemp);
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                    result.PopulateRoomBillingProcessResult = BillingDataProcessStep1.PopulateRoomBilling(model.Period, model.ClientID, model.IsTemp);
+
+                if ((model.BillingCategory & BillingCategory.Store) > 0)
+                    result.PopulateStoreBillingProcessResult = BillingDataProcessStep1.PopulateStoreBilling(model.Period, model.IsTemp);
+
+                return result;
             }
-
-            return result;
-        }
-
-        public T BillingProcessStep1<T>(BillingProcessStep1Command model) where T : ProcessResult, new()
-        {
-            var result = BillingProcessStep1(model);
-            return result as T;
         }
 
         [HttpPost, Route("process/step2")]
@@ -65,27 +56,51 @@ namespace LNF.WebApi.Billing.Controllers
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            ProcessResult result = new ProcessResult("BillingProcessStep2");
-
-            switch (model.BillingCategory)
+            using (DA.StartUnitOfWork())
             {
-                case BillingCategory.Tool:
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateToolBillingByAccount(model.Period, model.ClientID);
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateToolBillingByToolOrg(model.Period, model.ClientID);
-                    break;
-                case BillingCategory.Room:
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateRoomBillingByAccount(model.Period, model.ClientID);
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateRoomBillingByRoomOrg(model.Period, model.ClientID);
-                    break;
-                case BillingCategory.Store:
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateStoreBillingByAccount(model.Period, model.ClientID);
-                    result.RowsLoaded += BillingDataProcessStep2.PopulateStoreBillingByItemOrg(model.Period, model.ClientID);
-                    break;
-                default:
-                    throw new Exception($"Unknown billing category: {model.BillingCategory}");
-            }
+                var result = new BillingProcessResult("BillingProcessStep2");
 
-            return result;
+                if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateToolBillingByAccount")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateToolBillingByAccount(model.Period, model.ClientID)
+                    });
+
+                    result.AddResult(new BillingProcessResult("PopulateToolBillingByToolOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateToolBillingByToolOrg(model.Period, model.ClientID)
+                    });
+                }
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateRoomBillingByAccount")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateRoomBillingByAccount(model.Period, model.ClientID)
+                    });
+
+                    result.AddResult(new BillingProcessResult("PopulateRoomBillingByRoomOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateRoomBillingByRoomOrg(model.Period, model.ClientID)
+                    });
+                }
+
+                if ((model.BillingCategory & BillingCategory.Store) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateStoreBillingByAccount")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateStoreBillingByAccount(model.Period, model.ClientID)
+                    });
+
+                    result.AddResult(new BillingProcessResult("PopulateStoreBillingByItemOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep2.PopulateStoreBillingByItemOrg(model.Period, model.ClientID)
+                    });
+                }
+
+                return result;
+            }
         }
 
         [HttpPost, Route("process/step3")]
@@ -94,24 +109,36 @@ namespace LNF.WebApi.Billing.Controllers
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            ProcessResult result = new ProcessResult("BillingProcessStep3");
-
-            switch (model.BillingCategory)
+            using (DA.StartUnitOfWork())
             {
-                case BillingCategory.Tool:
-                    result.RowsLoaded += BillingDataProcessStep3.PopulateToolBillingByOrg(model.Period, model.ClientID);
-                    break;
-                case BillingCategory.Room:
-                    result.RowsLoaded += BillingDataProcessStep3.PopulateRoomBillingByOrg(model.Period, model.ClientID);
-                    break;
-                case BillingCategory.Store:
-                    result.RowsLoaded += BillingDataProcessStep3.PopulateStoreBillingByOrg(model.Period);
-                    break;
-                default:
-                    throw new Exception($"Unknown billing category: {model.BillingCategory}");
-            }
+                var result = new BillingProcessResult("BillingProcessStep3");
 
-            return result;
+                if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateToolBillingByOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep3.PopulateToolBillingByOrg(model.Period, model.ClientID)
+                    });
+                }
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateRoomBillingByOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep3.PopulateRoomBillingByOrg(model.Period, model.ClientID)
+                    });
+                }
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                {
+                    result.AddResult(new BillingProcessResult("PopulateStoreBillingByOrg")
+                    {
+                        RowsLoaded = BillingDataProcessStep3.PopulateStoreBillingByOrg(model.Period)
+                    });
+                }
+
+                return result;
+            }
         }
 
         /// <summary>
@@ -125,22 +152,25 @@ namespace LNF.WebApi.Billing.Controllers
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            PopulateSubsidyBillingProcessResult result;
-
-            switch (model.Command)
+            using (DA.StartUnitOfWork())
             {
-                case "subsidy":
-                    result = BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(model.Period, model.ClientID);
-                    break;
-                case "distribution":
-                    result = new PopulateSubsidyBillingProcessResult { Command = "distribution" };
-                    BillingDataProcessStep4Subsidy.DistributeSubsidyMoneyEvenly(model.Period, model.ClientID);
-                    break;
-                default:
-                    throw new Exception($"Unknown command: {model.Command}");
-            }
+                PopulateSubsidyBillingProcessResult result;
 
-            return result;
+                switch (model.Command)
+                {
+                    case "subsidy":
+                        result = BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(model.Period, model.ClientID);
+                        break;
+                    case "distribution":
+                        result = new PopulateSubsidyBillingProcessResult { Command = "distribution" };
+                        BillingDataProcessStep4Subsidy.DistributeSubsidyMoneyEvenly(model.Period, model.ClientID);
+                        break;
+                    default:
+                        throw new Exception($"Unknown command: {model.Command}");
+                }
+
+                return result;
+            }
         }
 
         /// <summary>
@@ -151,21 +181,24 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("process/remote-processing-update")]
         public bool RemoteProcessingUpdate([FromBody] RemoteProcessingUpdate model)
         {
-            var client = DA.Current.Single<Client>(model.ClientID);
+            using (DA.StartUnitOfWork())
+            {
+                var client = DA.Current.Single<Client>(model.ClientID);
 
-            if (client == null)
-                return false;
+                if (client == null)
+                    return false;
 
-            var acct = DA.Current.Single<Account>(model.AccountID);
+                var acct = DA.Current.Single<Account>(model.AccountID);
 
-            if (acct == null)
-                return false;
+                if (acct == null)
+                    return false;
 
-            BillingType bt = BillingTypeManager.GetBillingType(client, acct, model.Period);
-            ToolBillingManager.UpdateBillingType(client.ClientID, acct.AccountID, bt.BillingTypeID, model.Period);
-            RoomBillingUtility.UpdateBillingType(client, acct, bt, model.Period);
+                BillingType bt = BillingTypeManager.GetBillingType(client, acct, model.Period);
+                ToolBillingManager.UpdateBillingType(client.ClientID, acct.AccountID, bt.BillingTypeID, model.Period);
+                RoomBillingUtility.UpdateBillingType(client, acct, bt, model.Period);
 
-            return true;
+                return true;
+            }
         }
 
         /// <summary>
@@ -174,7 +207,7 @@ namespace LNF.WebApi.Billing.Controllers
         /// <param name="model">A process command</param>
         /// <returns>A result object</returns>
         [HttpPost, Route("process/data/clean")]
-        public ProcessResult BillingProcessDataClean([FromBody] BillingProcessDataCleanCommand model)
+        public BillingProcessDataCleanResult BillingProcessDataClean([FromBody] BillingProcessDataCleanCommand model)
         {
             if (model.StartDate == default(DateTime))
                 throw new Exception("Missing parameter: StartDate");
@@ -185,30 +218,21 @@ namespace LNF.WebApi.Billing.Controllers
             if (model.EndDate <= model.StartDate)
                 throw new Exception("StartDate must come before EndDate.");
 
-            ProcessResult result;
-
-            switch (model.BillingCategory)
+            using (DA.StartUnitOfWork())
             {
-                case BillingCategory.Tool:
-                    result = new WriteToolDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
-                    break;
-                case BillingCategory.Room:
-                    result = new WriteRoomDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
-                    break;
-                case BillingCategory.Store:
-                    result = new WriteStoreDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
-                    break;
-                default:
-                    throw new Exception($"Unknown billing category: {model.BillingCategory}");
+                BillingProcessDataCleanResult result = new BillingProcessDataCleanResult();
+
+                if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                    result.WriteToolDataCleanProcessResult = new WriteToolDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                    result.WriteRoomDataCleanProcessResult = new WriteRoomDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
+
+                if ((model.BillingCategory & BillingCategory.Store) > 0)
+                    result.WriteStoreDataCleanProcessResult = new WriteStoreDataCleanProcess(model.StartDate, model.EndDate, model.ClientID).Start();
+
+                return result;
             }
-
-            return result;
-        }
-
-        public T BillingProcessDataClean<T>(BillingProcessDataCleanCommand model) where T : ProcessResult, new()
-        {
-            var result = BillingProcessDataClean(model);
-            return result as T;
         }
 
         /// <summary>
@@ -217,35 +241,26 @@ namespace LNF.WebApi.Billing.Controllers
         /// <param name="model">A process command</param>
         /// <returns>A result object</returns>
         [HttpPost, Route("process/data")]
-        public ProcessResult BillingProcessData([FromBody] BillingProcessDataCommand model)
+        public BillingProcessDataResult BillingProcessData([FromBody] BillingProcessDataCommand model)
         {
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            ProcessResult result;
-
-            switch (model.BillingCategory)
+            using (DA.StartUnitOfWork())
             {
-                case BillingCategory.Tool:
-                    result = new WriteToolDataProcess(model.Period, model.ClientID, model.Record).Start();
-                    break;
-                case BillingCategory.Room:
-                    result = new WriteRoomDataProcess(model.Period, model.ClientID, model.Record).Start();
-                    break;
-                case BillingCategory.Store:
-                    result = new WriteStoreDataProcess(model.Period, model.ClientID, model.Record).Start();
-                    break;
-                default:
-                    throw new Exception($"Unknown billing category: {model.BillingCategory}");
+                BillingProcessDataResult result = new BillingProcessDataResult();
+
+                if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                    result.WriteToolDataProcessResult = new WriteToolDataProcess(model.Period, model.ClientID, model.Record).Start();
+
+                if ((model.BillingCategory & BillingCategory.Room) > 0)
+                    result.WriteRoomDataProcessResult = new WriteRoomDataProcess(model.Period, model.ClientID, model.Record).Start();
+
+                if ((model.BillingCategory & BillingCategory.Store) > 0)
+                    result.WriteStoreDataProcessResult = new WriteStoreDataProcess(model.Period, model.ClientID, model.Record).Start();
+
+                return result;
             }
-
-            return result;
-        }
-
-        public T BillingProcessData<T>(BillingProcessDataCommand model) where T : ProcessResult, new()
-        {
-            ProcessResult result = BillingProcessData(model);
-            return result as T;
         }
 
         /// <summary>
@@ -256,11 +271,8 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("process/data/finalize")]
         public DataFinalizeProcessResult BillingProcessDataFinalize([FromBody] BillingProcessDataFinalizeCommand model)
         {
-            var result = new DataFinalizeProcessResult();
-
-            DataTableManager.Finalize(model.Period);
-
-            return result;
+            using (DA.StartUnitOfWork())
+                return DataTableManager.Finalize(model.Period);
         }
 
         /// <summary>
@@ -271,11 +283,8 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("process/data/update")]
         public DataUpdateProcessResult BillingProcessDataUpdate([FromBody] BillingProcessDataUpdateCommand model)
         {
-            var result = new DataUpdateProcessResult();
-
-            DataTableManager.Update(new[] { model.BillingCategory.ToString() });
-
-            return result;
+            using (DA.StartUnitOfWork())
+                return DataTableManager.Update(model.BillingCategory);
         }
 
         [HttpDelete, Route("process/data/{billingCategory}")]
@@ -298,15 +307,18 @@ namespace LNF.WebApi.Billing.Controllers
                     throw new NotImplementedException();
             }
 
-            string sql = $"DELETE FROM {billingCategory}Data WHERE Period = @Period AND ClientID = ISNULL(@ClientID, ClientID) AND {recordParam} = ISNULL(@Record, {1})";
+            using (DA.StartUnitOfWork())
+            {
+                string sql = $"DELETE FROM {billingCategory}Data WHERE Period = @Period AND ClientID = ISNULL(@ClientID, ClientID) AND {recordParam} = ISNULL(@Record, {1})";
 
-            int result = DA.Command(CommandType.Text)
-                .Param("Period", period)
-                .Param("ClientID", clientId > 0, clientId, DBNull.Value)
-                .Param("Record", record > 0, record, DBNull.Value)
-                .ExecuteNonQuery(sql).Value;
+                int result = DA.Command(CommandType.Text)
+                    .Param("Period", period)
+                    .Param("ClientID", clientId > 0, clientId, DBNull.Value)
+                    .Param("Record", record > 0, record, DBNull.Value)
+                    .ExecuteNonQuery(sql).Value;
 
-            return result;
+                return result;
+            }
         }
     }
 }
