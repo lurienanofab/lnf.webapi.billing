@@ -33,8 +33,6 @@ namespace LNF.WebApi.Billing.Controllers
 
             using (DA.StartUnitOfWork())
             {
-                int clientId = (model.ClientID == 0) ? -1 : model.ClientID;
-
                 BillingProcessStep1Result result = new BillingProcessStep1Result();
 
                 if ((model.BillingCategory & BillingCategory.Tool) > 0)
