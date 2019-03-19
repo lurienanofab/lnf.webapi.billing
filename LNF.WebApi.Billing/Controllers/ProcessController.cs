@@ -244,21 +244,18 @@ namespace LNF.WebApi.Billing.Controllers
             if (model.Period == default(DateTime))
                 throw new Exception("Missing parameter: Period");
 
-            using (DA.StartUnitOfWork())
-            {
-                BillingProcessDataResult result = new BillingProcessDataResult();
+            BillingProcessDataResult result = new BillingProcessDataResult();
 
-                if ((model.BillingCategory & BillingCategory.Tool) > 0)
-                    result.WriteToolDataProcessResult = new WriteToolDataProcess(model.Period, model.ClientID, model.Record).Start();
+            if ((model.BillingCategory & BillingCategory.Tool) > 0)
+                result.WriteToolDataProcessResult = new WriteToolDataProcess(model.Period, model.ClientID, model.Record).Start();
 
-                if ((model.BillingCategory & BillingCategory.Room) > 0)
-                    result.WriteRoomDataProcessResult = new WriteRoomDataProcess(model.Period, model.ClientID, model.Record).Start();
+            if ((model.BillingCategory & BillingCategory.Room) > 0)
+                result.WriteRoomDataProcessResult = new WriteRoomDataProcess(model.Period, model.ClientID, model.Record).Start();
 
-                if ((model.BillingCategory & BillingCategory.Store) > 0)
-                    result.WriteStoreDataProcessResult = new WriteStoreDataProcess(model.Period, model.ClientID, model.Record).Start();
+            if ((model.BillingCategory & BillingCategory.Store) > 0)
+                result.WriteStoreDataProcessResult = new WriteStoreDataProcess(model.Period, model.ClientID, model.Record).Start();
 
-                return result;
-            }
+            return result;
         }
 
         /// <summary>

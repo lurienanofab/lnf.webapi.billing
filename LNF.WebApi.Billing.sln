@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.26228.57
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.WebApi.Billing", "LNF.WebApi.Billing\LNF.WebApi.Billing.csproj", "{DCF75766-2E02-48CD-89A4-3C0A65C2EB2E}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.Models", "..\lnf\LNF.Models\LNF.Models.csproj", "{98C7F73D-EF9D-4A87-8B79-A1208085CFBD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineServices.Api", "..\lnf\OnlineServices.Api\OnlineServices.Api.csproj", "{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LNF.WebApi.Billing.Tests", "LNF.WebApi.Billing.Tests\LNF.WebApi.Billing.Tests.csproj", "{88E4B778-3200-4050-9F99-5C8DAC8EA798}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +60,12 @@ Global
 		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Staging|Any CPU.ActiveCfg = Staging|Any CPU
 		{D0C76FE8-7233-4DA5-B106-8E4F51A32AD2}.Staging|Any CPU.Build.0 = Staging|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Staging|Any CPU.ActiveCfg = Release|Any CPU
+		{88E4B778-3200-4050-9F99-5C8DAC8EA798}.Staging|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,18 +1,17 @@
 ﻿using LNF.Cache;
 using LNF.Data;
 using LNF.Models.Billing;
+using LNF.Models.Scheduler;
 using LNF.Repository.Billing;
 using LNF.Repository.Scheduler;
-using LNF.Scheduler;
 
 namespace LNF.WebApi.Billing.Models
 {
     public class RegularExceptionFactory
     {
-        public RegularException CreateRegularException(IToolBilling tb, ReservationInvitee invitee)
+        public RegularException CreateRegularException(IResource res, IToolBilling tb, ReservationInvitee invitee)
         {
             var client = CacheManager.Current.GetClient(tb.ClientID);
-            var res = CacheManager.Current.ResourceTree().GetResource(tb.ResourceID);
             var acct = CacheManager.Current.GetAccount(tb.AccountID);
 
             int inviteeClientId = 0;
