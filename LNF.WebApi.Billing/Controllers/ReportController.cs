@@ -18,8 +18,8 @@ namespace LNF.WebApi.Billing.Controllers
     /// </summary>
     public class ReportController : ApiController
     {
-        protected IApportionmentManager ApportionmentManager => ServiceProvider.Current.Use<IApportionmentManager>();
-        protected IBillingTypeManager BillingTypeManager => ServiceProvider.Current.Use<IBillingTypeManager>();
+        protected IApportionmentManager ApportionmentManager => ServiceProvider.Current.Billing.ApportionmentManager;
+        protected IBillingTypeManager BillingTypeManager => ServiceProvider.Current.BillingTypeManager;
 
         /// <summary>
         /// Send the monthly User Apportionment reminder via email. The return value is the number of emails sent
@@ -30,14 +30,30 @@ namespace LNF.WebApi.Billing.Controllers
         public SendMonthlyApportionmentEmailsProcessResult SendUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
         {
             using (DA.StartUnitOfWork())
-                return ApportionmentManager.SendMonthlyApportionmentEmails(options.Period, options.Message, options.NoEmail);
+                return ApportionmentManager.SendMonthlyApportionmentEmails(options);
         }
 
         [HttpGet, Route("report/user-apportionment/view")]
-        public IEnumerable<ReportEmail> ViewUserApportionmentReport(DateTime period, string message = null)
+        public IEnumerable<ReportEmail> ViewUserApportionmentReport(DateTime period, string message = null, bool noEmail = false)
         {
             using (DA.StartUnitOfWork())
-                return ApportionmentManager.GetMonthlyApportionmentEmails(period, message);
+            {
+                var options = new UserApportionmentReportOptions
+                {
+                    Period = period,
+                    Message = message,
+                    NoEmail = noEmail
+                };
+
+                return ApportionmentManager.GetMonthlyApportionmentEmails(options);
+            }
+        }
+
+        [HttpPost, Route("report/user-apportionment/view")]
+        public IEnumerable<ReportEmail> ViewUserApportionmentReport([FromBody] UserApportionmentReportOptions options)
+        {
+            using (DA.StartUnitOfWork())
+                return ApportionmentManager.GetMonthlyApportionmentEmails(options);
         }
 
         /// <summary>
@@ -48,21 +64,33 @@ namespace LNF.WebApi.Billing.Controllers
         [HttpPost, Route("report/financial-manager")]
         public SendMonthlyUserUsageEmailsProcessResult SendFinancialManagerReport([FromBody] FinancialManagerReportOptions options)
         {
-            var opts = new MonthlyEmailOptions
-            {
-                IncludeManager = options.IncludeManager,
-                Message = options.Message
-            };
-
             using (DA.StartUnitOfWork())
-                return FinancialManagerUtility.SendMonthlyUserUsageEmails(options.Period, options.ClientID, options.ManagerOrgID, opts);
+                return FinancialManagerUtility.SendMonthlyUserUsageEmails(options);
         }
 
         [HttpGet, Route("report/financial-manager/view")]
-        public IEnumerable<ReportEmail> ViewFinancialManagerReport(DateTime period, int clientId = 0, int managerOrgId = 0, string message = null)
+        public IEnumerable<ReportEmail> ViewFinancialManagerReport(DateTime period, int clientId = 0, int managerOrgId = 0, string message = null, bool includeManager = true)
         {
             using (DA.StartUnitOfWork())
-                return FinancialManagerUtility.GetMonthlyUserUsageEmails(period, clientId, managerOrgId, message);
+            {
+                var options = new FinancialManagerReportOptions
+                {
+                    Period = period,
+                    ClientID = clientId,
+                    ManagerOrgID = managerOrgId,
+                    Message = message,
+                    IncludeManager = includeManager
+                };
+
+                return FinancialManagerUtility.GetMonthlyUserUsageEmails(options);
+            }
+        }
+
+        [HttpPost, Route("report/financial-manager/view")]
+        public IEnumerable<ReportEmail> ViewFinancialManagerReport([FromBody] FinancialManagerReportOptions options)
+        {
+            using (DA.StartUnitOfWork())
+                return FinancialManagerUtility.GetMonthlyUserUsageEmails(options);
         }
 
         [Route("report/billing-summary")]

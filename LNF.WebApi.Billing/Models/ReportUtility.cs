@@ -9,7 +9,7 @@ namespace LNF.WebApi.Billing.Models
 {
     public static class ReportUtility
     {
-        public static IBillingTypeManager BillingTypeManager => ServiceProvider.Current.Use<IBillingTypeManager>();
+        public static IBillingTypeManager BillingTypeManager => ServiceProvider.Current.BillingTypeManager;
 
         [Obsolete("Use LNF.CommonTools.LineCostUtility.CalculateToolLineCost instead.")]
         public static void ApplyToolFormula(DataTable dt, DateTime startPeriod, DateTime endPeriod)

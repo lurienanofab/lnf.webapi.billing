@@ -79,6 +79,7 @@
     <Compile Include="ProcessControllerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBase.cs" />
+    <Compile Include="ReportControllerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

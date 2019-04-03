@@ -215,8 +215,9 @@ namespace LNF.WebApi.Billing.Controllers
 
         private IEnumerable<ToolBillingItem> CreateToolBillingItems(IEnumerable<IToolBilling> source, bool temp)
         {
+            var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
             foreach (IToolBilling tb in source)
-                BillingDataProcessStep1.CalculateToolBillingCharges(tb);
+                step1.CalculateToolBillingCharges(tb);
 
             var result = source.AsQueryable().CreateToolBillingItems();
 

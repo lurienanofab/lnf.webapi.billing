@@ -1,8 +1,8 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using LNF.WebApi.Billing.Controllers;
+﻿using LNF.Models.Billing;
 using LNF.Models.Billing.Process;
-using LNF.Models.Billing;
+using LNF.WebApi.Billing.Controllers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace LNF.WebApi.Billing.Tests
 {

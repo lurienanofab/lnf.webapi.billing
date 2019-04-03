@@ -46,6 +46,8 @@ namespace LNF.WebApi.Billing.Controllers
 
                     sw = new Stopwatch();
 
+                    var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
+
                     if (args.BillingCategory.HasFlag(BillingCategory.Tool))
                     {
                         var toolDataClean = new WriteToolDataCleanProcess(sd, ed, args.ClientID);
@@ -60,7 +62,7 @@ namespace LNF.WebApi.Billing.Controllers
                         result.Add(string.Format("Completed ToolData in {0}", sw.Elapsed));
 
                         sw.Restart();
-                        BillingDataProcessStep1.PopulateToolBilling(sd, args.ClientID, isTemp);
+                        step1.PopulateToolBilling(sd, args.ClientID, isTemp);
                         result.Add(string.Format("Completed ToolBilling in {0}", sw.Elapsed));
 
                         populateSubsidy = true;
@@ -80,7 +82,7 @@ namespace LNF.WebApi.Billing.Controllers
                         result.Add(string.Format("Completed RoomData in {0}", sw.Elapsed));
 
                         sw.Restart();
-                        BillingDataProcessStep1.PopulateRoomBilling(sd, args.ClientID, isTemp);
+                        step1.PopulateRoomBilling(sd, args.ClientID, isTemp);
                         result.Add(string.Format("Completed RoomBilling in {0}", sw.Elapsed));
 
                         populateSubsidy = true;
@@ -100,7 +102,7 @@ namespace LNF.WebApi.Billing.Controllers
                         result.Add(string.Format("Completed StoreData in {0}", sw.Elapsed));
 
                         sw.Restart();
-                        BillingDataProcessStep1.PopulateStoreBilling(sd, isTemp);
+                        step1.PopulateStoreBilling(sd, isTemp);
                         result.Add(string.Format("Completed StoreBilling in {0}", sw.Elapsed));
                     }
 
@@ -146,8 +148,10 @@ namespace LNF.WebApi.Billing.Controllers
 
                 bool isTemp = DateTime.Now.FirstOfMonth() == model.Period;
 
-                var pr5 = BillingDataProcessStep1.PopulateToolBilling(model.Period, model.ClientID, isTemp);
-                var pr6 = BillingDataProcessStep1.PopulateRoomBilling(model.Period, model.ClientID, isTemp);
+                var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
+
+                var pr5 = step1.PopulateToolBilling(model.Period, model.ClientID, isTemp);
+                var pr6 = step1.PopulateRoomBilling(model.Period, model.ClientID, isTemp);
 
                 PopulateSubsidyBillingProcessResult pr7 = null;
 

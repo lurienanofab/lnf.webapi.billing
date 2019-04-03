@@ -96,14 +96,16 @@ namespace LNF.WebApi.Billing.Controllers
 
                 var result = new List<RoomBillingItem>();
 
+                var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
+
                 ds = BillingDataProcessStep1.GetRoomData(period);
-                dt = BillingDataProcessStep1.LoadRoomBilling(ds, period, clientId, temp);
+                dt = step1.LoadRoomBilling(ds, period, clientId, temp);
                 result.AddRange(CreateRoomBillingItems(dt, temp));
 
                 if (useParentRooms)
                 {
                     ds = BillingDataProcessStep1.GetRoomData(period, BillingDataProcessStep1.FOR_PARENT_ROOMS);
-                    dt = BillingDataProcessStep1.LoadRoomBilling(ds, period, clientId, temp);
+                    dt = step1.LoadRoomBilling(ds, period, clientId, temp);
                     result.AddRange(CreateRoomBillingItems(dt, temp));
                 }
 
