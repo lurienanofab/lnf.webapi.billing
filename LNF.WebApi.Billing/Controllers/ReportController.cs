@@ -18,7 +18,7 @@ namespace LNF.WebApi.Billing.Controllers
     /// </summary>
     public class ReportController : ApiController
     {
-        protected IApportionmentManager ApportionmentManager => ServiceProvider.Current.Billing.ApportionmentManager;
+        protected IApportionmentManager ApportionmentManager => ServiceProvider.Current.Billing.Apportionment;
         protected IBillingTypeManager BillingTypeManager => ServiceProvider.Current.BillingTypeManager;
 
         /// <summary>

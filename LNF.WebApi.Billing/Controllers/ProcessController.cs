@@ -1,13 +1,9 @@
-﻿using LNF.Billing;
-using LNF.CommonTools;
+﻿using LNF.CommonTools;
 using LNF.Models;
 using LNF.Models.Billing;
 using LNF.Models.Billing.Process;
 using LNF.Repository;
-using LNF.Repository.Billing;
-using LNF.Repository.Data;
 using System;
-using System.Data;
 using System.Web.Http;
 
 namespace LNF.WebApi.Billing.Controllers
@@ -34,7 +30,7 @@ namespace LNF.WebApi.Billing.Controllers
         public BillingProcessDataCleanResult BillingProcessDataClean([FromBody] BillingProcessDataCleanCommand model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessDataClean(model);
+                return Provider.Billing.Process.BillingProcessDataClean(model);
         }
 
         /// <summary>
@@ -46,7 +42,7 @@ namespace LNF.WebApi.Billing.Controllers
         public BillingProcessDataResult BillingProcessData([FromBody] BillingProcessDataCommand model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessData(model);
+                return Provider.Billing.Process.BillingProcessData(model);
         }
 
         /// <summary>
@@ -58,7 +54,7 @@ namespace LNF.WebApi.Billing.Controllers
         public BillingProcessStep1Result BillingProcessStep1([FromBody] BillingProcessStep1Command model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessStep1(model);
+                return Provider.Billing.Process.BillingProcessStep1(model);
         }
 
         [Obsolete, HttpPost, Route("process/step2")]
@@ -161,7 +157,7 @@ namespace LNF.WebApi.Billing.Controllers
         public PopulateSubsidyBillingProcessResult BillingProcessStep4([FromBody] BillingProcessStep4Command model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessStep4(model);
+                return Provider.Billing.Process.BillingProcessStep4(model);
         }
 
         /// <summary>
@@ -173,7 +169,7 @@ namespace LNF.WebApi.Billing.Controllers
         public DataFinalizeProcessResult BillingProcessDataFinalize([FromBody] BillingProcessDataFinalizeCommand model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessDataFinalize(model);
+                return Provider.Billing.Process.BillingProcessDataFinalize(model);
         }
 
         /// <summary>
@@ -185,7 +181,7 @@ namespace LNF.WebApi.Billing.Controllers
         public DataUpdateProcessResult BillingProcessDataUpdate([FromBody] BillingProcessDataUpdateCommand model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.BillingProcessDataUpdate(model);
+                return Provider.Billing.Process.BillingProcessDataUpdate(model);
         }
 
         /// <summary>
@@ -197,14 +193,14 @@ namespace LNF.WebApi.Billing.Controllers
         public bool RemoteProcessingUpdate([FromBody] RemoteProcessingUpdate model)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.RemoteProcessingUpdate(model);
+                return Provider.Billing.Process.RemoteProcessingUpdate(model);
         }
 
         [HttpDelete, Route("process/data/{billingCategory}")]
         public int DeleteData(BillingCategory billingCategory, DateTime period, int clientId = 0, int record = 0)
         {
             using (DA.StartUnitOfWork())
-                return Provider.Billing.ProcessManager.DeleteData(billingCategory, period, clientId, record);
+                return Provider.Billing.Process.DeleteData(billingCategory, period, clientId, record);
         }
     }
 }
