@@ -167,18 +167,6 @@
     <Compile Include="Controllers\RoomController.cs" />
     <Compile Include="Controllers\StoreController.cs" />
     <Compile Include="Controllers\ToolController.cs" />
-    <Compile Include="Models\JournalUnitGenerator.cs" />
-    <Compile Include="Models\RegularExceptionFactory.cs" />
-    <Compile Include="Models\ReportGenerator.cs" />
-    <Compile Include="Models\AccountInfo.cs" />
-    <Compile Include="Models\DataAccess.cs" />
-    <Compile Include="Models\ReportUtility.cs" />
-    <Compile Include="Models\RoomJournalUnitGenerator.cs" />
-    <Compile Include="Models\RoomServiceUnitBillingGenerator.cs" />
-    <Compile Include="Models\ServiceUnitBillingGenerator.cs" />
-    <Compile Include="Models\StoreServiceUnitBillingGenerator.cs" />
-    <Compile Include="Models\ToolJournalUnitGenerator.cs" />
-    <Compile Include="Models\ToolServiceUnitBillingGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -195,7 +183,9 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\LNF\LNF.Impl\LNF.Impl.csproj">
       <Project>{7a6cd165-0c48-4680-9a49-281688eb1cd8}</Project>

@@ -106,10 +106,6 @@
       <Project>{e3b73410-869b-4ba2-99ac-ad6708a27ade}</Project>
       <Name>LNF</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\lnf\OnlineServices.Api\OnlineServices.Api.csproj">
-      <Project>{d0c76fe8-7233-4da5-b106-8e4f51a32ad2}</Project>
-      <Name>OnlineServices.Api</Name>
-    </ProjectReference>
     <ProjectReference Include="..\LNF.WebApi.Billing\LNF.WebApi.Billing.csproj">
       <Project>{dcf75766-2e02-48cd-89a4-3c0a65c2eb2e}</Project>
       <Name>LNF.WebApi.Billing</Name>

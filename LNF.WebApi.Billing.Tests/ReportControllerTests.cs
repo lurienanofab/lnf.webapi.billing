@@ -21,7 +21,7 @@ namespace LNF.WebApi.Billing.Tests
                 NoEmail = false
             };
 
-            var emails = controller.ViewUserApportionmentReport(opts);
+            var emails = controller.GetUserApportionmentReportEmails(opts);
             Assert.AreEqual(76, emails.Count());
             Assert.AreEqual("lnf-billing@umich.edu", emails.First().FromAddress);
             Assert.AreEqual("lnf-it@umich.edu", emails.First().CcAddress.First());

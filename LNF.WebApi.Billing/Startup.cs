@@ -1,4 +1,5 @@
-﻿using LNF.Impl.DependencyInjection.Web;
+﻿using LNF.Impl.Context;
+using LNF.Impl.DependencyInjection.Web;
 using Microsoft.Owin;
 using Owin;
 using System.Web.Http;
@@ -11,7 +12,8 @@ namespace LNF.WebApi.Billing
     {
         public override void Configuration(IAppBuilder app)
         {
-            var ioc = new IOC();
+            var ctx = new WebContext(new WebContextFactory());
+            var ioc = new IOC(ctx);
             ServiceProvider.Current = ioc.Resolver.GetInstance<ServiceProvider>();
 
             // ServiceProvider.Current.DataAccess.StartUnitOfWork() is not called here. It should be called in each controller action method.

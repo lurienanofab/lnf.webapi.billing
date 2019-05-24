@@ -23,104 +23,7 @@ namespace LNF.WebApi.Billing.Controllers
         {
             using (DA.StartUnitOfWork())
             {
-                // updates all billing
-
-                DateTime startTime = DateTime.Now;
-
-                var result = new List<string>
-                {
-                    $"Started at {startTime:yyyy-MM-dd HH:mm:ss}"
-                };
-
-                Stopwatch sw;
-
-                DateTime sd = args.StartDate;
-
-                while (sd < args.EndDate)
-                {
-                    DateTime ed = sd.AddMonths(1);
-
-                    var isTemp = (sd == DateTime.Now.FirstOfMonth());
-
-                    var populateSubsidy = false;
-
-                    sw = new Stopwatch();
-
-                    var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
-
-                    if (args.BillingCategory.HasFlag(BillingCategory.Tool))
-                    {
-                        var toolDataClean = new WriteToolDataCleanProcess(sd, ed, args.ClientID);
-                        var toolData = new WriteToolDataProcess(sd, args.ClientID, args.ResourceID);
-
-                        sw.Restart();
-                        toolDataClean.Start();
-                        result.Add(string.Format("Completed ToolDataClean in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        toolData.Start();
-                        result.Add(string.Format("Completed ToolData in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        step1.PopulateToolBilling(sd, args.ClientID, isTemp);
-                        result.Add(string.Format("Completed ToolBilling in {0}", sw.Elapsed));
-
-                        populateSubsidy = true;
-                    }
-
-                    if (args.BillingCategory.HasFlag(BillingCategory.Room))
-                    {
-                        var roomDataClean = new WriteRoomDataCleanProcess(sd, ed, args.ClientID);
-                        var roomData = new WriteRoomDataProcess(sd, args.ClientID, args.RoomID);
-
-                        sw.Restart();
-                        roomDataClean.Start();
-                        result.Add(string.Format("Completed RoomDataClean in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        roomData.Start();
-                        result.Add(string.Format("Completed RoomData in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        step1.PopulateRoomBilling(sd, args.ClientID, isTemp);
-                        result.Add(string.Format("Completed RoomBilling in {0}", sw.Elapsed));
-
-                        populateSubsidy = true;
-                    }
-
-                    if (args.BillingCategory.HasFlag(BillingCategory.Store))
-                    {
-                        var storeDataClean = new WriteStoreDataCleanProcess(sd, ed, args.ClientID);
-                        var storeData = new WriteStoreDataProcess(sd, args.ClientID, args.ItemID);
-
-                        sw.Restart();
-                        storeDataClean.Start();
-                        result.Add(string.Format("Completed StoreDataClean in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        storeData.Start();
-                        result.Add(string.Format("Completed StoreData in {0}", sw.Elapsed));
-
-                        sw.Restart();
-                        step1.PopulateStoreBilling(sd, isTemp);
-                        result.Add(string.Format("Completed StoreBilling in {0}", sw.Elapsed));
-                    }
-
-                    if (!isTemp && populateSubsidy)
-                    {
-                        sw.Restart();
-                        BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(sd, args.ClientID);
-                        result.Add(string.Format("Completed SubsidyBilling in {0}", sw.Elapsed));
-                    }
-
-                    sd = sd.AddMonths(1);
-
-                    sw.Stop();
-                }
-
-                result.Add(string.Format("Completed at {0:yyyy-MM-dd HH:mm:ss}, time taken: {1}", DateTime.Now, DateTime.Now - startTime));
-
-                return result;
+                return ServiceProvider.Current.Billing.Process.UpdateBilling(args);
             }
         }
 
@@ -129,45 +32,7 @@ namespace LNF.WebApi.Billing.Controllers
         {
             using (DA.StartUnitOfWork())
             {
-                DateTime now = DateTime.Now;
-
-                DateTime sd = model.Period;
-                DateTime ed = model.Period.AddMonths(1);
-
-                var toolDataClean = new WriteToolDataCleanProcess(sd, ed, model.ClientID);
-                var toolData = new WriteToolDataProcess(sd, model.ClientID, 0);
-
-                var roomDataClean = new WriteRoomDataCleanProcess(sd, ed, model.ClientID);
-                var roomData = new WriteRoomDataProcess(sd, model.ClientID, 0);
-
-                var pr1 = toolDataClean.Start();
-                var pr2 = roomDataClean.Start();
-
-                var pr3 = toolData.Start();
-                var pr4 = roomData.Start();
-
-                bool isTemp = DateTime.Now.FirstOfMonth() == model.Period;
-
-                var step1 = new BillingDataProcessStep1(DateTime.Now, ServiceProvider.Current);
-
-                var pr5 = step1.PopulateToolBilling(model.Period, model.ClientID, isTemp);
-                var pr6 = step1.PopulateRoomBilling(model.Period, model.ClientID, isTemp);
-
-                PopulateSubsidyBillingProcessResult pr7 = null;
-
-                if (!isTemp)
-                    pr7 = BillingDataProcessStep4Subsidy.PopulateSubsidyBilling(model.Period, model.ClientID);
-
-                return new UpdateClientBillingResult
-                {
-                    WriteToolDataCleanProcessResult = pr1,
-                    WriteRoomDataCleanProcessResult = pr2,
-                    WriteToolDataProcessResult = pr3,
-                    WriteRoomDataProcessResult = pr4,
-                    PopulateToolBillingProcessResult = pr5,
-                    PopulateRoomBillingProcessResult = pr6,
-                    PopulateSubsidyBillingProcessResult = pr7
-                };
+                return ServiceProvider.Current.Billing.Process.UpdateClientBilling(model);
             }
         }
     }
