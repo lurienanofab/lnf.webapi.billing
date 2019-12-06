@@ -1,5 +1,4 @@
-﻿using LNF.Impl.Context;
-using LNF.Impl.DependencyInjection.Default;
+﻿using LNF.Impl.DependencyInjection.Default;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace LNF.WebApi.Billing.Tests
@@ -9,9 +8,8 @@ namespace LNF.WebApi.Billing.Tests
         [TestInitialize]
         public void TestInit()
         {
-            var ctx = new WebContext(new ContextFactory());
-            var ioc = new IOC(ctx);
-            ServiceProvider.Current = ioc.Resolver.GetInstance<ServiceProvider>();
+            var ioc = new IOC();
+            ServiceProvider.Configure(ioc.Resolver);
         }
     }
 }

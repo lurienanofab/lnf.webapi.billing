@@ -13,8 +13,8 @@ namespace LNF.WebApi.Billing
         public override void Configuration(IAppBuilder app)
         {
             var ctx = new WebContext(new WebContextFactory());
-            var ioc = new IOC(ctx);
-            ServiceProvider.Current = ioc.Resolver.GetInstance<ServiceProvider>();
+            var ioc = new IOC();
+            ServiceProvider.Configure(ioc.Resolver);
 
             // ServiceProvider.Current.DataAccess.StartUnitOfWork() is not called here. It should be called in each controller action method.
             // This allows more control of when database transactions commit, which solves issues where different processes access the same
