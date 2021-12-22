@@ -1,38 +1,31 @@
-﻿using LNF.CommonTools;
-using LNF.Models;
-using LNF.Models.Billing;
-using LNF.Models.Billing.Process;
-using LNF.Repository;
-using Newtonsoft.Json;
-using System;
+﻿using LNF.Billing;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Web.Http;
 
 namespace LNF.WebApi.Billing.Controllers
 {
-    public class DefaultController : ApiController
+    public class DefaultController : BillingApiController
     {
+        public DefaultController(IProvider provider) : base(provider) { }
+
         [AllowAnonymous, Route("")]
         public string Get() => "billing-api";
 
         [HttpPost, Route("update")]
         public IEnumerable<string> UpdateBilling([FromBody] UpdateBillingArgs args)
         {
-            using (DA.StartUnitOfWork())
+            using (StartUnitOfWork())
             {
-                return ServiceProvider.Current.Billing.Process.UpdateBilling(args);
+                return Provider.Billing.Process.UpdateBilling(args);
             }
         }
 
         [HttpPost, Route("update-client")]
         public UpdateClientBillingResult UpdateClientBilling(UpdateClientBillingCommand model)
         {
-            using (DA.StartUnitOfWork())
+            using (StartUnitOfWork())
             {
-                return ServiceProvider.Current.Billing.Process.UpdateClientBilling(model);
+                return Provider.Billing.Process.UpdateClientBilling(model);
             }
         }
     }

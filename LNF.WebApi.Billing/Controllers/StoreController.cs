@@ -1,24 +1,27 @@
-﻿using LNF.CommonTools;
-using LNF.Models.Billing;
-using LNF.Repository;
-using LNF.Repository.Billing;
-using LNF.Repository.Data;
+﻿using LNF.Billing;
+using LNF.CommonTools;
+using LNF.Impl.Billing;
+using LNF.Impl.Repository.Billing;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Http;
 
 namespace LNF.WebApi.Billing.Controllers
 {
-    public class StoreController : ApiController
+    public class StoreController : BillingApiController
     {
+        public StoreController(IProvider provider) : base(provider) { }
+
         [Route("store/data/clean")]
         public IEnumerable<StoreDataCleanItem> GetStoreDataClean(DateTime sd, DateTime ed, int clientId = 0, int itemId = 0)
         {
-            using (DA.StartUnitOfWork())
+            using (StartUnitOfWork())
             {
-                var query = DA.Current.Query<StoreDataClean>()
+                var query = Session.Query<StoreDataClean>()
                     .Where(x => x.StatusChangeDate >= sd && x.StatusChangeDate < ed
                         && x.Client.ClientID == (clientId > 0 ? clientId : x.Client.ClientID)
                         && x.Item.ItemID == (itemId > 0 ? itemId : x.Item.ItemID));
@@ -34,9 +37,11 @@ namespace LNF.WebApi.Billing.Controllers
         {
             // Does the processing without saving anything to the database.
 
-            using (DA.StartUnitOfWork())
+            using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["cnSselData"].ConnectionString))
             {
-                var proc = new WriteStoreDataProcess(period, clientId, itemId);
+                conn.Open();
+
+                var proc = new WriteStoreDataProcess(new WriteStoreDataConfig { Connection = conn, Context = "StoreController.CreateStoreData", Period = period, ClientID = clientId, ItemID = itemId });
                 var dtExtract = proc.Extract();
                 var dtTransform = proc.Transform(dtExtract);
 
@@ -54,6 +59,8 @@ namespace LNF.WebApi.Billing.Controllers
                     StatusChangeDate = x.Field<DateTime>("StatusChangeDate")
                 }).ToList();
 
+                conn.Close();
+
                 return result;
             }
         }
@@ -61,9 +68,9 @@ namespace LNF.WebApi.Billing.Controllers
         [Route("store/data")]
         public IEnumerable<StoreDataItem> GetStoreData(DateTime period, int clientId = 0, int itemId = 0)
         {
-            using (DA.StartUnitOfWork())
+            using (StartUnitOfWork())
             {
-                var query = DA.Current.Query<StoreData>()
+                var query = Session.Query<StoreData>()
                 .Where(x => x.Period == period
                     && x.ClientID == (clientId > 0 ? clientId : x.ClientID)
                     && x.ItemID == (itemId > 0 ? itemId : x.ItemID));
@@ -80,9 +87,14 @@ namespace LNF.WebApi.Billing.Controllers
             // Does the same processing as BillingDataProcessStep1.PopulateStoreBilling (transforms
             // a StoreData record into a StoreBilling record) without saving anything to the database.
 
-            using (DA.StartUnitOfWork())
+            using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["cnSselData"].ConnectionString))
             {
-                var dt = BillingDataProcessStep1.GetStoreData(period);
+                conn.Open();
+
+                DateTime now = DateTime.Now;
+
+                var step1 = new BillingDataProcessStep1(new Step1Config { Connection = conn, Context = "StoreController.CreateStoreBilling", Period = period, Now = now, ClientID = clientId, IsTemp = false });
+                var dt = step1.GetStoreData();
 
                 var result = dt.AsEnumerable().Select(x => new StoreBillingItem
                 {
@@ -101,6 +113,8 @@ namespace LNF.WebApi.Billing.Controllers
                     IsTemp = x.Field<bool>("IsTemp")
                 }).ToList();
 
+                conn.Close();
+
                 return result;
             }
         }
@@ -108,7 +122,7 @@ namespace LNF.WebApi.Billing.Controllers
         [Route("store")]
         public IEnumerable<StoreBillingItem> GetStoreBilling(DateTime period, int clientId = 0, int itemId = 0)
         {
-            using (DA.StartUnitOfWork())
+            using (StartUnitOfWork())
             {
                 var temp = period == DateTime.Now.FirstOfMonth();
 
@@ -126,9 +140,9 @@ namespace LNF.WebApi.Billing.Controllers
         private IQueryable<IStoreBilling> GetStoreBillingQuery(bool temp)
         {
             if (temp)
-                return DA.Current.Query<StoreBillingTemp>();
+                return Session.Query<StoreBillingTemp>();
             else
-                return DA.Current.Query<StoreBilling>();
+                return Session.Query<StoreBilling>();
         }
     }
 }

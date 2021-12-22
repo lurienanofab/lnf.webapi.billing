@@ -7,7 +7,7 @@
   <configSections>
     <sectionGroup name="lnf">
       <section name="swagger" type="LNF.WebApi.Swagger.SwaggerConfigurationSection, LNF.WebApi"/>
-      <section name="provider" type="LNF.ServiceProviderSection, LNF"/>
+      <section name="provider" type="LNF.Configuration, LNF"/>
     </sectionGroup>
   </configSections>
 
@@ -15,21 +15,22 @@
     <swagger title="Billing API" version="v1"/>
     <provider production="false">
       <context loginUrl="/login"/>
-      <dataAccess showSql="true" universalPassword="lnfmgr"/>
-      <email host="127.0.0.1" enableSsl="true" log="true"/>
+      <dataAccess showSql="true"/>
+      <email host="xxxxx" port="xxxxx" log="true"/>
       <control host="xxxxx"/>
       <log name="LNF.WebApi.Billing" enabled="true"/>
     </provider>
   </lnf>
 
   <appSettings>
-    <add key="as:Issuer" value="xxxxx"/>
-    <add key="as:AudienceId" value="xxxxx" />
-    <add key="as:AudienceSecret" value="xxxxx" />
-    <add key="ApiHost" value="xxxxx"/>
+    <add key="SecurePath" value="xxxxx"/>
+    <add key="ApiBaseUrl" value="xxxxx"/>
+    <add key="BasicAuthUsername" value="xxxxx"/>
+    <add key="BasicAuthPassword" value="xxxxx"/>
+    <add key="ApiKey" value="xxxxx"/>
     <add key="AboutPageHeaderText" value="LNF Billing API"/>
     <add key="UseParentRooms" value="true"/>
-    <add key="UserApportionmentEmailRecipients" value=""/>
+    <add key="UserApportionmentEmailRecipients" value="xxxxx"/>
     <add key="MonthlyFinancialEmailRecipients" value="xxxxx"/>
     <add key="MongoConnectionString" value="xxxxx"/>
     <add key="webpages:Version" value="3.0.0.0"/>
@@ -43,18 +44,33 @@
   </connectionStrings>
 
   <system.web>
-    <compilation debug="true" targetFramework="4.7"/>
-    <httpRuntime targetFramework="4.7"/>
+    <compilation debug="true" targetFramework="4.8">
+      <assemblies>
+        <remove assembly="netfx.force.conflicts"/>
+        <remove assembly="System.Data.Common"/>
+        <remove assembly="System.Diagnostics.StackTrace"/>
+        <remove assembly="System.Diagnostics.Tracing"/>
+        <remove assembly="System.Globalization.Extensions"/>
+        <remove assembly="System.Net.Sockets"/>
+        <remove assembly="System.Runtime.Serialization.Primitives"/>
+        <remove assembly="System.Security.Cryptography.Algorithms"/>
+        <remove assembly="System.Security.SecureString"/>
+        <remove assembly="System.Threading.Overlapped"/>
+        <remove assembly="System.Xml.XPath.XDocument"/>
+      </assemblies>
+    </compilation>
+
+    <httpRuntime targetFramework="4.8"/>
 
     <authentication mode="Forms">
-      <forms name="sselAuth.cookie" path="/" loginUrl="/login" timeout="480" protection="All" slidingExpiration="true" domain="umich.edu" cookieless="UseCookies"/>
+      <forms name="xxxxx" path="/" loginUrl="/login" timeout="480" protection="All" slidingExpiration="true" domain="xxxxx" cookieless="UseCookies"/>
     </authentication>
 
     <authorization>
       <allow users="*"/>
     </authorization>
 
-    <machineKey validationKey="xxxxxx" decryptionKey="xxxxx" validation="SHA1" decryption="3DES" compatibilityMode="Framework20SP2"/>
+    <machineKey validationKey="xxxxx" decryptionKey="xxxxx" validation="SHA1" decryption="3DES" compatibilityMode="Framework20SP2"/>
 
     <customErrors mode="Off"/>
   </system.web>

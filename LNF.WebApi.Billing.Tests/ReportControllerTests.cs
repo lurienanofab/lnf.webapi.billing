@@ -1,8 +1,8 @@
-﻿using System;
-using System.Linq;
-using LNF.Models.Billing.Reports;
+﻿using LNF.Billing.Reports;
 using LNF.WebApi.Billing.Controllers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Linq;
 
 namespace LNF.WebApi.Billing.Tests
 {
@@ -12,7 +12,7 @@ namespace LNF.WebApi.Billing.Tests
         [TestMethod]
         public void CanViewApportionmentEmails()
         {
-            var controller = new ReportController();
+            var controller = new ReportController(Provider);
 
             var opts = new UserApportionmentReportOptions
             {

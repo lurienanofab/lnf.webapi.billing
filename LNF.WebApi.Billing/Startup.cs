@@ -1,29 +1,36 @@
-﻿using LNF.Impl.Context;
-using LNF.Impl.DependencyInjection.Web;
+﻿using LNF.Impl.DependencyInjection;
 using Microsoft.Owin;
 using Owin;
 using System.Web.Http;
+using System.Web.Mvc;
+using System.Web.Routing;
 
 [assembly: OwinStartup(typeof(LNF.WebApi.Billing.Startup))]
 
 namespace LNF.WebApi.Billing
 {
-    public class Startup : ApiOwinStartup
+    public class Startup
     {
-        public override void Configuration(IAppBuilder app)
+        public void Configuration(IAppBuilder app)
         {
-            var ctx = new WebContext(new WebContextFactory());
-            var ioc = new IOC();
-            ServiceProvider.Configure(ioc.Resolver);
+            HttpConfiguration config = new HttpConfiguration();
+            
+            // setup up dependency injection container
+            var context = ContainerContextFactory.Current.NewAsyncScopedContext();
 
-            // ServiceProvider.Current.DataAccess.StartUnitOfWork() is not called here. It should be called in each controller action method.
-            // This allows more control of when database transactions commit, which solves issues where different processes access the same
-            // tables and cause transaction deadlock issues.
+            var wcc = new WebContainerConfiguration(context);
+            wcc.RegisterAllTypes();
 
-            // WebApi setup (includes adding the Authorization filter)
-            config = new HttpConfiguration();
+            // setup webapi dependency injection
+            config.BootstrapWebApi(context.Container);
+
+            // mvc
+            AreaRegistration.RegisterAllAreas();
+            RouteTable.Routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+            RouteTable.Routes.MapMvcAttributeRoutes();
+
+            // webapi
             WebApiConfig.Register(config);
-
             app.UseWebApi(config);
         }
     }

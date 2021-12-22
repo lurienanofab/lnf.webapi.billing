@@ -1,5 +1,6 @@
-﻿using LNF.Models.Billing;
-using LNF.Models.Billing.Process;
+﻿using LNF.Billing;
+using LNF.Billing.Process;
+using LNF.Impl.Billing;
 using LNF.WebApi.Billing.Controllers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -12,9 +13,9 @@ namespace LNF.WebApi.Billing.Tests
         [TestMethod]
         public void CanProcessData()
         {
-            var controller = new ProcessController();
+            var controller = new ProcessController(Provider);
 
-            var model = new BillingProcessDataCommand
+            var model = new DataCommand
             {
                 BillingCategory = BillingCategory.Tool | BillingCategory.Room | BillingCategory.Store,
                 ClientID = 81,
@@ -42,6 +43,20 @@ namespace LNF.WebApi.Billing.Tests
             Assert.AreEqual(0, result.WriteStoreDataProcessResult.RowsDeleted);
             Assert.AreEqual(0, result.WriteStoreDataProcessResult.RowsExtracted);
             Assert.AreEqual(0, result.WriteStoreDataProcessResult.RowsLoaded);
+        }
+
+        [TestMethod]
+        public void CanWriteRoomDataProcess()
+        {
+            using (var conn = NewConnection())
+            {
+                var period = DateTime.Parse("2020-12-01");
+                var clientId = 216;
+                var record = 0;
+
+                var process = new WriteRoomDataProcess(new WriteRoomDataConfig { Connection = conn, Context = "ProcessControllerTests.CanWriteRoomDataProcess", Period = period, ClientID = clientId, RoomID = record });
+                var result = process.Start();
+            }
         }
     }
 }
