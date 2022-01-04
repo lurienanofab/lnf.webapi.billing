@@ -54,7 +54,7 @@ namespace LNF.WebApi.Billing.Controllers
         [Obsolete, HttpPost, Route("process/step2")]
         public ProcessResult BillingProcessStep2([FromBody] Step2Command model)
         {
-            if (model.Period == default(DateTime))
+            if (model.Period == default)
                 throw new Exception("Missing parameter: Period");
 
             using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["cnSselData"].ConnectionString))
@@ -113,7 +113,7 @@ namespace LNF.WebApi.Billing.Controllers
         [Obsolete, HttpPost, Route("process/step3")]
         public ProcessResult BillingProcessStep3([FromBody] Step3Command model)
         {
-            if (model.Period == default(DateTime))
+            if (model.Period == default)
                 throw new Exception("Missing parameter: Period");
 
             using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["cnSselData"].ConnectionString))

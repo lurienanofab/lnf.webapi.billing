@@ -57,7 +57,7 @@ namespace LNF.WebApi.Billing.Tests
 
                 var process = new WriteRoomDataProcess(new WriteRoomDataConfig { Connection = conn, Context = "WriteRoomDataProcessTests.CanStartWriteRoomDataProcess", Period = period, ClientID = clientId, RoomID = 0 });
 
-                var result = process.Start();
+                process.Start();
 
                 conn.Close();
             }
