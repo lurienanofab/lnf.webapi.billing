@@ -193,7 +193,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <Content Include="Views\web.config" />
-    <None Include="Properties\PublishProfiles\Production.pubxml" />
+    <None Include="Properties\PublishProfiles\Production %28Apps%29.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
       <SubType>Designer</SubType>
