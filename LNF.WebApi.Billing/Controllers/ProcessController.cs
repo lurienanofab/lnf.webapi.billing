@@ -104,6 +104,8 @@ namespace LNF.WebApi.Billing.Controllers
                     });
                 }
 
+                result.SetEndedAt();
+
                 conn.Close();
 
                 return result;
@@ -147,6 +149,8 @@ namespace LNF.WebApi.Billing.Controllers
                         RowsLoaded = step3.PopulateStoreBillingByOrg(model.Period)
                     });
                 }
+
+                result.SetEndedAt();
 
                 conn.Close();
 
