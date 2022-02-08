@@ -80,6 +80,20 @@ namespace LNF.WebApi.Billing.Controllers
                 return Provider.Billing.Report.GetFinancialManagerReportEmails(options);
         }
 
+        [HttpPost, Route("report/card-expiration")]
+        public SendMonthlyCardExpirationEmailsProcessResult SendCardExpirationReport()
+        {
+            using (StartUnitOfWork())
+                return Provider.Billing.Report.SendCardExpirationReport();
+        }
+
+        [HttpPost, Route("report/card-expiration/view")]
+        public IEnumerable<CardExpirationReportEmail> GetCardExpirationReportEmails()
+        {
+            using (StartUnitOfWork())
+                return Provider.Billing.Report.GetCardExpirationReportEmails();
+        }
+
         [Route("report/billing-summary")]
         public IEnumerable<IBillingSummary> GetBillingSummary(DateTime sd, DateTime ed, bool includeRemote = false, int clientId = 0)
         {
