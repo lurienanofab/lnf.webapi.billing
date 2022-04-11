@@ -14,9 +14,10 @@ namespace LNF.WebApi.Billing
         public void Configuration(IAppBuilder app)
         {
             HttpConfiguration config = new HttpConfiguration();
-            
+
             // setup up dependency injection container
-            var context = ContainerContextFactory.Current.NewAsyncScopedContext();
+            ContainerContextFactory.Current.NewAsyncScopedContext();
+            var context = ContainerContextFactory.Current.GetContext();
 
             var wcc = new WebContainerConfiguration(context);
             wcc.RegisterAllTypes();

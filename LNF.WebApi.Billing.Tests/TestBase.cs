@@ -12,7 +12,8 @@ namespace LNF.WebApi.Billing.Tests
         [TestInitialize]
         public void TestInit()
         {
-            var context = ContainerContextFactory.Current.NewThreadScopedContext();
+            ContainerContextFactory.Current.NewThreadScopedContext();
+            var context = ContainerContextFactory.Current.GetContext();
             var cfg = new ThreadStaticContainerConfiguration(context);
             cfg.RegisterAllTypes();
             context.Container.Verify();
